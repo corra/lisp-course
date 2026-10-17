@@ -1,0 +1,18 @@
+# SBCL compiled files and saved runtime images (keep Lisp source and ASD files).
+*.fasl
+*.core
+
+# Learner exercises, local data, dependency installations, and build output.
+/work/
+/build/
+/.cache/
+/quicklisp/
+/.qlot/
+/.vscode/alive/
+
+# Temporary editor files; no editor is required by the course.
+*~
+.#*
+\#*\#
+*.swp
+*.swo

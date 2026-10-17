@@ -1,5 +1,11 @@
 # Hints, worked solutions, and review answers
 
+The optional library lab has a separate worked example in
+[`optional/libraries/`](optional/libraries/) and an explicit
+[`optional/run-library-tests.lisp`](optional/run-library-tests.lisp) driver.
+Its [module guide](optional/QUICKLISP.md) explains setup and acceptance criteria;
+it is not loaded by the core solutions or test suite.
+
 Attempt the labs first. These are reference approaches, not the only correct
 solutions. Full runnable definitions for most programming exercises are in
 [`examples/exercise-solutions.lisp`](examples/exercise-solutions.lisp). The three
@@ -39,6 +45,13 @@ value. `format` with destination `t` normally returns `nil`.
 (progn (format t "ready~%") 42)      ; prints ready, returns 42
 ```
 
+In the last example, `format` performs the printing; its return value is
+discarded. The last form, `42`, supplies the whole `progn`'s return value.
+A REPL displays that value after the printed text, while a script displays only
+the explicit output. `(progn (+ 1 2) (+ 3 4))` returns `7`, whereas using `list`
+instead collects both computed values as `(3 7)`. `progn` is useful inside an
+`if` branch because that branch accepts one form, not several separate forms.
+
 An ordinary eager function would evaluate both branch arguments before the call,
 so it could not provide `if`'s non-evaluation of the unused branch. A quoted
 symbol is an object; a string is a character sequence; a quoted list is data;
@@ -56,20 +69,56 @@ an evaluated list normally describes an operation.
 (string-equal "Ada" "ada")           ; T
 ```
 
+For Lab 02.3, `truncate` chooses -2 because it rounds -7/3 toward zero;
+`floor` chooses -3 because it rounds toward negative infinity. Their remainders
+then follow from `remainder = number - quotient * divisor`:
+
+```text
+truncate: -7 = (-2 * 3) + (-1)
+floor:    -7 = (-3 * 3) + 2
+```
+
+For positive 7, both choose quotient 2 and remainder 1. That agreement does not
+make their policies equivalent: the negative case exposes the difference.
+`ceiling` rounds toward positive infinity, while `round` chooses the nearest
+integer with exact ties to even. Thus `(round 5 2)` returns `2, 1`, while
+`(round 7 2)` returns `4, -1`. A negative remainder is not itself an error; it
+is the amount needed to reconstruct the original number from the chosen quotient.
+
 `'()` and `nil` are the same false/empty-list object. An empty string is true.
 Integer cents avoid binary rounding for whole-cent amounts, although division,
 tax, rounding, and multiple currencies still need domain rules.
 
 ## 03 — Functions and scope
 
-See `price-with-tax` and `make-stepper` in the executable answers. `let` creates
-new bindings after evaluating all initializers in the old environment, so inner
-`y` sees outer `x = 5`. `let*` lets `y` see newly bound `x = 10`.
+See `price-with-tax` and `make-stepper` in the executable answers.
+
+For Lab 03.4, both inner forms evaluate their initializer expressions from left
+to right. What changes is when the new bindings become visible:
+
+| Step | Inner `let` | Inner `let*` |
+|---|---|---|
+| First initializer, `10` | Save 10 as the future value for inner `x`; no inner binding yet | Evaluate 10 and establish inner `x = 10` immediately |
+| Second initializer, `x` | Read outer `x = 5`; save 5 as the future value for `y` | Read the already established inner `x = 10`; bind `y` to 10 |
+| Inner body, `(list x y)` | Establish both bindings, then return `(10 5)` | Both bindings already exist; return `(10 10)` |
+| Outer binding | Still 5; the inner binding shadows it, not assigns it | Still 5; the inner binding shadows it, not assigns it |
+
+Use `let*` for a later initializer that needs an earlier new binding. Use `let`
+when the initializers are independent of the new sibling bindings. “Parallel”
+binding does not mean concurrent evaluation: both forms evaluate initializers
+left to right. The [lesson's worked traces](lessons/03-functions.md#local-bindings-and-assignment)
+explain these steps before the exercise.
 
 A binding associates a name with a location/value in an environment. Assignment
 changes what a place holds. Mutating a cons or string changes an object that
 other references may share. A closure retains lexical bindings, not a frozen
 copy of every value. `defvar` intentionally preserves an already-bound value.
+
+For Lab 03.5, `price-with-tax` and `make-stepper` already use conventional
+hyphenated function names. Parameters such as `rate`, `start`, and `step`, and
+the closure's private counter, are ordinary lexical bindings: do not give them
+special-variable earmuffs or constant decorations. Explain exceptions using the
+[style guide](STYLE.md), rather than renaming the required API.
 
 ## 04 — Control
 

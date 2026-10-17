@@ -1,0 +1,24 @@
+name: Core course tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SBCL
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes sbcl
+      - name: Record implementation version
+        run: sbcl --version
+      - name: Run dependency-free reference tests
+        run: sbcl --noinform --no-sysinit --no-userinit --script examples/run-all.lisp

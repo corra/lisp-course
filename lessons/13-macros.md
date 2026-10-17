@@ -3,7 +3,28 @@
 **Goals:** read macro expansions and write a small macro with explicit evaluation
 and name-capture guarantees. **Prerequisite:** 12. **Time:** 4–6 hours.
 
+## Prerequisite recap
+
+From [Lesson 12](12-objects.md):
+
+- Structures/classes model data, and their definitions can provide constructors
+  and accessors. Generated names are part of the definition's API, not missing built-ins.
+- Generic functions select methods by applicable argument types; use ordinary
+  functions and records when a more elaborate object model is unnecessary.
+- From [Lessons 01](01-evaluation.md) and [05](05-lists.md), source forms can be
+  represented as list data; from [Lesson 03](03-functions.md), lexical bindings
+  determine name visibility.
+
+This lesson uses those foundations
+to transform source forms while preserving deliberate evaluation and binding rules.
+
 ## A macro receives forms, not their run-time values
+
+`defmacro` has a name, a parameter list, and an expander body. Unlike `defun`, its
+parameters receive the caller's **source forms**, not evaluated argument values.
+`&body body` collects the remaining source forms into a list named `body`, like
+`&rest` with an intentional body/indentation convention. `when-positive` is the
+macro we define below, not a built-in operator.
 
 ```lisp
 (defmacro when-positive (expression &body body)
@@ -21,9 +42,52 @@ The expansion is ordinary Lisp code. The compiler compiles it or the evaluator
 evaluates it. `macroexpand-1` performs one outer expansion and also returns an
 expanded-p value; it does not recursively expand every nested form.
 
+In the template, `,expression` inserts the source form held by the expander's
+parameter; `,@body` inserts the list's individual forms, not one nested list.
+These comma notations apply inside backquote. The expansion's generated
+`when` follows the ordinary control rules taught in Lesson 04. The second
+`macroexpand-1` value is true when it performed an expansion.
+
 Use a function whenever ordinary evaluated arguments suffice. A macro is
 justified for new binding, control, resource, or syntactic conventions—not merely
 to avoid typing a short function call.
+
+## Evaluation is not macro expansion
+
+Lesson 01 previewed `eval`: it takes a Lisp object and evaluates that object as
+a form. It does not merely inspect or expand it.
+
+```lisp
+(list '+ 2 3)         ; constructs the data (+ 2 3)
+(eval (list '+ 2 3))  ; executes that form, returning 5
+(funcall #'+ 2 3)     ; calls the function directly, also returning 5
+(apply #'+ '(2 3))    ; calls it with arguments from a list, returning 5
+```
+
+If your goal is to call a function, choose `funcall` or `apply`, not construction
+of a source form followed by `eval`. Use list/sequence operations for processing
+data. `eval` is appropriate only when executing Lisp forms is deliberately part
+of the program's contract, such as a controlled evaluator for trusted forms.
+
+`eval` evaluates in the **null lexical environment**: it cannot see the caller's
+local lexical variables, functions, or macros. Current dynamic special-variable
+bindings still apply. Consequently, constructing a symbol with the same name as
+a local variable does not give evaluated code access to that variable. Pass data
+to ordinary functions or capture lexical bindings in closures instead. The
+`*package*` used while reading a symbol determines its identity; it does not give
+`eval` access to a caller's lexical bindings.
+
+Contrast `(eval '(+ 2 3))` with the earlier `macroexpand-1` example. `eval`
+executes the addition; `macroexpand-1` returns an expansion without executing the
+expanded body. A macro normally **returns code** for the compiler/evaluator to
+process in its use-site context; its expander should not `eval` the caller's body
+as a substitute for returning that code.
+
+`eval` takes an object, not source text to parse. A string evaluates to itself,
+so `(eval "(+ 2 3)")` returns the string, not `5`. Adding `read-from-string` would
+introduce the reader's own behavior and security concerns, not make user input
+safe. Recall Lesson 08: never execute untrusted data, and disabling read-time
+evaluation does not make later calls to `eval` safe.
 
 ## The repeated-evaluation trap
 
@@ -36,6 +100,11 @@ This macro is wrong for a once-only contract:
 
 `(bad-twice (incf n))` increments twice. The expansion duplicates the form.
 A better macro uses a fresh temporary symbol:
+
+`gensym`, introduced as an EOF-marker constructor in [Lesson 08](08-io.md),
+also creates variable names that cannot accidentally equal a caller's interned
+symbol. Here the local expander variable `value` holds that fresh symbol; comma
+inserts the symbol into the generated binding and references.
 
 ```lisp
 (defmacro twice (expression)
@@ -56,6 +125,12 @@ macros.
 
 ## A binding macro
 
+The parameter pattern `((name) &body body)` destructures the macro call's first
+argument as a one-element list, binding its element to the expander variable
+`name`. It is the source-pattern counterpart of the destructuring introduced
+in Lesson 05; the caller's syntax is `(with-collected-output (out) body...)`.
+`with-output-to-string` is the stream-binding macro from Lesson 08.
+
 ```lisp
 (defmacro with-collected-output ((name) &body body)
   `(with-output-to-string (,name)
@@ -75,10 +150,21 @@ available then. `eval-when (:compile-toplevel :load-toplevel :execute)` can arra
 this for appropriate top-level definitions, but its semantics depend on context.
 Consult the HyperSpec before solving complex phase problems with it.
 
+`eval-when` lists the situations in which its body should be processed:
+`:compile-toplevel` allows top-level compile-time evaluation, `:load-toplevel`
+arranges for evaluation when the resulting file is loaded, and `:execute`
+covers ordinary evaluation outside that file-compilation handling. These are
+phase names, not run-time variables. Exact interactions depend on whether the
+form is top-level and on surrounding forms; the lab does not require using it.
+Consult the HyperSpec's `EVAL-WHEN` entry for the full phase rules rather than
+treating it as a general dependency-order repair.
+
 Never use macro expansion to perform surprise file I/O or application mutations.
 A file can be compiled repeatedly, and expansion is not a reliable run-time hook.
 
 ## Lab 13 — Evaluate once
+
+### Exercises
 
 1. Implement `twice` and show that `(let ((n 0)) (list (twice (incf n)) n))`
    yields `(2 1)`.
@@ -88,8 +174,17 @@ A file can be compiled repeatedly, and expansion is not a reliable run-time hook
 4. Explain which of these macros could instead be a function and what would
    change in the call syntax/evaluation behavior.
 
-**Pass:** `when-bind` binds intentionally, evaluates the expression once, and
-returns `nil` on false input. Its body can access `name` without outside capture.
+### Acceptance checklist
 
-**Checkpoint:** Why does a macro not simply receive values like a function?
-What can `gensym` prevent, and what intentional bindings should it not replace?
+- [ ] Exercise 1: the side-effect test for `twice` returns `(2 1)`.
+- [ ] Exercise 2: `when-bind` evaluates its expression once, intentionally binds
+  the chosen name for the body, and returns `nil` on false input without capture.
+- [ ] Exercise 3: true, false, zero, and side-effect cases behave as documented;
+  you can explain the inspected expansions.
+- [ ] Exercise 4: your explanation distinguishes ordinary function arguments
+  from the macros' binding and evaluation behavior.
+
+### Review questions
+
+1. Why does a macro not simply receive values like a function?
+2. What can `gensym` prevent, and what intentional bindings should it not replace?

@@ -3,10 +3,30 @@
 **Goals:** choose data structures and understand capacity, presence, and equality.
 **Prerequisite:** 06. **Time:** 4–6 hours.
 
+## Prerequisite recap
+
+From [Lesson 06](06-sequences.md):
+
+- Functions are values: pass them to `funcall`, `apply`, mapping, filtering,
+  and reduction operations rather than constructing code for `eval`.
+- Sequence operations can use explicit projections, equality tests, and bounds;
+  lists, vectors, and strings share useful sequence interfaces.
+- Sorting can mutate its input, and deterministic output needs an explicit
+  ordering/tie policy. Copy when you do not own the sequence being sorted.
+
+This lesson develops the alternative representations behind those interfaces:
+arrays/vectors, strings, and hash tables for keyed lookup.
+
 ## Arrays and vectors
 
 A vector is a one-dimensional array. General arrays can have multiple dimensions.
 Unlike lists, vectors support efficient indexed access.
+
+`vector` constructs a vector from argument values; `make-array` constructs an
+array from dimensions and options. A single integer dimension means a vector;
+a list such as `'(2 3)` means two rows and three columns. `#(...)` is vector
+literal notation: literal vectors, like literal lists/strings, are not mutable
+scratch storage. Use constructors when you intend to modify their contents.
 
 ```lisp
 (let ((v (vector 10 20 30)))
@@ -33,12 +53,22 @@ An adjustable vector with a fill pointer can serve as a growable buffer:
 The fill pointer represents active length; capacity can be larger. Sequence
 operations respect the active length. Distinguish that from array dimensions.
 
+`:adjustable t` permits resizing, and `:fill-pointer 0` starts the active portion
+empty. `vector-push-extend` appends to the active portion, extending capacity
+when needed. `:new` is an arbitrary keyword value stored in the buffer, not an
+option for `vector-push-extend`.
+
 ## Strings
 
 Strings are vectors of characters. `char` accesses a string character;
 `string-upcase`, `string-downcase`, `string-trim`, and `concatenate` build useful
 transformations. Non-destructive does not imply every returned string is fresh;
 copy explicitly before mutation when ownership is uncertain.
+
+`string-upcase`/`string-downcase` change case in the returned string;
+`string-trim` removes characters in its first argument from both ends of its
+second. `#\Space` and `#\Tab` name whitespace characters. `concatenate` joins
+sequences; its first argument, `'string` here, specifies the result type.
 
 ```lisp
 (string-trim '(#\Space #\Tab) "  Ada ") ; "Ada"
@@ -66,6 +96,12 @@ default is `eql`, which is usually wrong for independently constructed string
 keys. Do not mutate a key in a way that changes its equality/hash behavior while
 it is stored. Hash-table traversal order is unspecified.
 
+`make-hash-table` creates the table. `(gethash key table default)` returns
+`default` when absent (the default default is `nil`) and a second presence value.
+As a `setf` place it inserts/replaces the key's value. Thus
+`(incf (gethash item counts 0))` in `frequencies` below changes an absent count
+from the supplied zero to one, or increments an existing count.
+
 ```lisp
 (defun frequencies (items)
   (let ((counts (make-hash-table :test #'equal)))
@@ -76,7 +112,15 @@ it is stored. Hash-table traversal order is unspecified.
 Use `maphash` to visit entries; if you need sorted output, collect entries and
 sort separately. Hash tables are good for lookup, not an implicit ordering policy.
 
+`maphash` takes a function and a table; the function receives each key and value.
+`remhash` removes an entry and `hash-table-count` returns the entry count.
+For Lab 07's failure case, `(error "Missing key: ~S" key)` signals a failure
+with a formatted message. This is a preview of [Lesson 11](11-conditions.md),
+which teaches custom conditions and handling; you need only signal the error now.
+
 ## Lab 07 — Counting and lookup
+
+### Exercises
 
 1. Implement `frequencies` and test independently allocated equal strings.
 2. Write `lookup-or-error`: retrieve a key, returning stored `nil` normally but
@@ -85,8 +129,16 @@ sort separately. Hash tables are good for lookup, not an implicit ordering polic
 4. Compare an alist, hash table, and vector for a phonebook; state assumptions
    about size, ordering, and access patterns.
 
-**Pass:** two equal strings share a count, stored `nil` is preserved, missing
-keys fail, and your structure choice follows requirements rather than habit.
+### Acceptance checklist
 
-**Checkpoint:** Why should deterministic reports not depend on `maphash` order?
-How does a fill pointer differ from an array's capacity?
+- [ ] Exercise 1: independently allocated equal strings share a count.
+- [ ] Exercise 2: stored `nil` is returned normally, but a missing key signals
+  an error.
+- [ ] Exercise 3: the vector's active contents are the squares from 0 through 9.
+- [ ] Exercise 4: your phonebook choice is justified by size, ordering, and
+  access requirements rather than habit.
+
+### Review questions
+
+1. Why should deterministic reports not depend on `maphash` order?
+2. How does a fill pointer differ from an array's capacity?

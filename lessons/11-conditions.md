@@ -3,6 +3,20 @@
 **Goals:** separate reporting a problem from choosing a recovery policy.
 **Prerequisite:** 10. **Time:** 4–6 hours.
 
+## Prerequisite recap
+
+From [Lesson 10](10-testing.md):
+
+- Tests check returned values, boundaries, failures, and ownership promises—not
+  just whether a program prints one plausible answer.
+- An expected-error test must fail if the error never occurs. Catching every
+  error can accidentally count an unrelated bug as successful validation.
+- The debugger, tracing, and fresh-process regression tests help connect a
+  failure to its source and verify that the saved repair actually works.
+
+You have briefly used `handler-case` in tests. This lesson explains conditions,
+handler behavior, and caller-selected recovery through restarts.
+
 ## Beyond a single exception mechanism
 
 A **condition** describes a situation. Some are informational, some warnings,
@@ -27,6 +41,19 @@ named recovery action made available by code that knows how to recover.
 Defining a condition gives callers a stable type to handle instead of asking
 them to parse an error message.
 
+Read the definition as `(define-condition name (parent-types...) slots options...)`.
+Here `invalid-score` is our new condition type, inheriting from built-in `error`.
+It stores a `value` slot (a named field). `:initarg :value` permits supplying that
+field with the keyword `:value`; `:reader invalid-score-value` generates a function
+to read it. That reader is **created by this definition**, not a missing built-in.
+The `:report` function receives the condition and an output stream and prints
+the diagnostic. [Lesson 12](12-objects.md) develops slots and generated accessors.
+
+`(error 'invalid-score :value value)` creates/signals that condition with a field
+value, rather than using the formatted-string variant of `error` previewed in
+Lesson 07. The quote passes the type's symbol as data. `<=` checks the inclusive
+bounds here, as introduced in Lesson 04.
+
 ## Unwinding handlers versus active handlers
 
 `handler-case` transfers control out of the protected form before its selected
@@ -37,6 +64,9 @@ clause runs. It is convenient for boundary translation:
   (invalid-score (condition)
     (format nil "Rejected ~S" (invalid-score-value condition))))
 ```
+
+The `(condition)` clause parameter binds the signaled condition object so its
+fields can be inspected. It is a name chosen by this handler, not a new operator.
 
 `handler-bind` runs a handler in the signaling context, while applicable restarts
 are still active. A handler can inspect the condition, invoke a restart, or
@@ -59,6 +89,15 @@ not the same thing as resuming the failed operation with that value.
   (recoverable-score 150))       ; 0
 ```
 
+`restart-case` wraps a form and defines clauses `(restart-name (parameters...) body...)`.
+`use-zero` is a restart name we choose; `()` means it takes no arguments, and
+`:report` supplies its human-readable debugger description. `invoke-restart`
+selects the active restart by name. `handler-bind` takes pairs of condition type
+and handler function; its body runs while those handlers are installed.
+`(declare (ignore condition))` tells the compiler the handler deliberately does
+not use its parameter; `declare` is a declaration, not a function call. More
+declaration forms appear in [Lesson 14](14-performance.md).
+
 The low-level code offers a meaningful action. The caller decides whether it is
 appropriate. Another caller could allow the error to reach the debugger instead.
 In reusable handlers, use `find-restart` (optionally with the condition) before
@@ -69,6 +108,12 @@ matters. Export names intended for callers or provide a public recovery function
 normally or by nonlocal exit. It is for cleanup, not selecting recovery policy;
 `with-open-file` already uses this kind of resource discipline for you.
 
+Its general shape is `(unwind-protect protected-form cleanup-form...)`: cleanup
+runs when control leaves the protected form, including through an error or
+`return-from`. It is not needed around a stream already managed by
+`with-open-file`. `ignore-errors` is a broad handler that returns `nil` and the
+condition on an error; the next section explains why that can hide bugs.
+
 ## Do not erase failures
 
 Avoid wrapping an entire program in `(ignore-errors ...)` and pretending a `nil`
@@ -78,14 +123,24 @@ unexpected errors clearly at a CLI boundary and exit unsuccessfully.
 
 ## Lab 11 — Resilient input
 
+### Exercises
+
 1. Define `invalid-score`, `validated-score`, and `recoverable-score` above.
 2. Test values 0, 100, -1, 101, and a string.
 3. Prove invalid input errors without a handler and returns 0 with the recovery
    handler. Valid input must not invoke the restart.
 4. Complete milestone 3: an importer offering `skip-record` for invalid records.
 
-**Pass:** the same validation code supports both stop and recover policies, tests
-do not require interactive input, and unrelated errors are not silently skipped.
+### Acceptance checklist
 
-**Checkpoint:** Why might a restart no longer be available inside a
-`handler-case` clause? Does `signal` always stop execution?
+- [ ] Exercises 1–2: the score condition and validators handle the specified
+  valid and invalid values as documented.
+- [ ] Exercise 3: the same validation code supports both stop and recover
+  policies; valid input does not invoke recovery, and tests need no human input.
+- [ ] Exercise 4: the importer meets milestone 3's requirements and does not
+  silently skip unrelated programming errors.
+
+### Review questions
+
+1. Why might a restart no longer be available inside a `handler-case` clause?
+2. Does `signal` always stop execution?

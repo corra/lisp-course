@@ -3,11 +3,29 @@
 **Goals:** understand list representation, dotted pairs, sharing, and destructive
 operations. **Prerequisite:** 04. **Time:** 4–6 hours.
 
+## Prerequisite recap
+
+From [Lesson 04](04-control.md):
+
+- `if` handles a two-way choice; `cond` tests ordered alternatives; `when` and
+  `unless` execute a body on one side of a test.
+- `dolist`, `dotimes`, and `loop` repeat computations and can return accumulated
+  results. Recursion needs a base case and progress toward it.
+- Local bindings hold working state, while assignment updates places; an early
+  `return` exits its enclosing loop/block rather than every enclosing function.
+
+You have already traversed lists. Now you will inspect their cons-cell structure
+to understand sharing, copying, and the effects of mutation.
+
 ## Lists are linked structures
 
 A **cons cell** contains two references, its `car` and its `cdr`. A proper list
 is either `nil` or a cons whose `cdr` is another proper list. Its final `cdr` is
 `nil`. The elements themselves can be any objects.
+
+`cons` constructs a cell. `car` reads its first reference and `cdr` its second;
+`first` and `rest` are the corresponding list-oriented names. Symbols such as
+`a`, `b`, and `c` in quoted examples are data we choose, not predefined variables.
 
 ```lisp
 (cons 1 nil)              ; (1)
@@ -64,6 +82,17 @@ except the last, which can be shared. `reverse` produces a reversed sequence;
 be used. The `n` prefix often warns of destructive behavior, but naming is not a
 complete rule: `sort` is destructive too.
 
+This historical `n` naming pattern is a warning, not a rule for naming all your
+mutating functions. Do not mechanically add `n-` or import a `!` mutation suffix
+from another Lisp dialect. Use a descriptive operation name and document its
+mutation/ownership contract; [Lesson 03](03-functions.md#naming-conventions)
+summarizes the conventions used by this course.
+
+`copy-seq` makes a shallow copy of a sequence (a list, vector, or string).
+Sequences and sorting are taught in [Lesson 06](06-sequences.md); vectors and
+strings are developed in [Lesson 07](07-collections.md). Here it is enough to
+recognize copying as a way to obtain data you own before modifying it.
+
 ```lisp
 (let ((result nil))
   (dolist (n '(1 2 3))
@@ -84,6 +113,11 @@ Clearly document whether a function owns, copies, or may mutate its input.
 An **alist** is a list of key/value pairs; a **plist** alternates indicators and
 values. Both are convenient for small records and options, but lookup is linear.
 Supply an appropriate `:test`, e.g. `#'equal`, when alist keys are strings.
+
+`assoc` returns the matching pair, or `nil`, which is why `cdr` then extracts
+its value. `getf` returns the matching property's value instead. `:test` supplies
+the equality function to use, e.g. `(assoc "Ada" entries :test #'equal)`.
+`entries` in this fragment stands for your alist, not a built-in variable.
 
 ## Trees and structural recursion
 
@@ -117,7 +151,18 @@ For a record of known shape, destructuring can clarify which part is which:
 `destructuring-bind` binds names from list structure; it does not validate a
 business data schema. Validate external records before destructuring them.
 
+In this pattern, `name` receives `"Ada"`, while nested names `x` and `y` receive
+`3` and `4`. The pattern is binding syntax, not a call to `name`. The related
+accessors `second`, `third`, `fourth`, `fifth`, and `sixth` select successive list
+elements; they appear in the [capstone](15-capstone.md#reading-the-reference-source).
+
+Composed accessor names such as `caar` are abbreviations: `(caar tree)` means
+`(car (car tree))`. The worked solutions use it to demonstrate nested sharing;
+it is not a separate representation or a new kind of list.
+
 ## Lab 05 — Shape and sharing
+
+### Exercises
 
 1. Draw the cells for `(cons 'a (list 'b 'c))` and `(cons 'a 'b)`.
 2. Write `count-occurrences` using `dolist` and an explicit `equal` comparison.
@@ -126,8 +171,17 @@ business data schema. Validate external records before destructuring them.
 4. Demonstrate that `copy-list` does not independently copy nested lists, using
    freshly allocated data rather than literals.
 
-**Pass:** counts handle an empty list and nested equal values; replacement leaves
-the original unchanged; your sharing explanation matches actual cell identity.
+### Acceptance checklist
 
-**Checkpoint:** Why can `(setf xs (nreverse xs))` be necessary? What does `append`
-share? Why is mutating a quoted list a bug rather than an optimization?
+- [ ] Exercise 1: your diagrams distinguish a proper list from a dotted pair.
+- [ ] Exercise 2: counting handles an empty list and nested `equal` values.
+- [ ] Exercise 3: replacement changes the returned list but leaves the input
+  spine unchanged.
+- [ ] Exercise 4: the demonstration uses freshly allocated data, and your
+  explanation of sharing agrees with the observed cell identities.
+
+### Review questions
+
+1. Why can `(setf xs (nreverse xs))` be necessary?
+2. What does `append` share?
+3. Why is mutating a quoted list a bug rather than an optimization?

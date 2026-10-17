@@ -1,5 +1,46 @@
 # Common Lisp / SBCL quick reference
 
+For optional additions, see [Quicklisp and libraries](optional/QUICKLISP.md),
+[tools/configuration](optional/TOOLING.md), and [editors/integrations](optional/EDITORS.md).
+The required commands below remain editor- and third-party-library-independent.
+
+## Where constructs are taught
+
+Earlier appearances are labelled previews or given a short explanation in the
+lesson that uses them. This index identifies the teaching location, not a claim
+that every incidental name is a separate language feature.
+
+| Topic / constructs | Teaching location |
+|---|---|
+| Shell/REPL distinction, `load`, `compile-file`, SBCL invocation/exit | [00 — environment](lessons/00-environment.md) |
+| Calls, `+ - * /`, quotation (`'`, `quote`), `list`, `if`, `progn` | [01 — evaluation](lessons/01-evaluation.md) |
+| `eval` preview and full explanation | [01 — preview](lessons/01-evaluation.md#preview-eval-treats-an-object-as-code), [13 — evaluation versus expansion](lessons/13-macros.md#evaluation-is-not-macro-expansion) |
+| Numbers, `#C`, float/ratio notation, predicates, equality, `t`/`nil`, keywords, `#\`, `coerce` | [02 — values](lessons/02-values.md) |
+| `floor`, `ceiling`, `truncate`, `round`, quotient/remainder relationship, ties to even | [02 — rounding and division](lessons/02-values.md#integer-quotients-rounding-and-remainders) |
+| `values`, `multiple-value-bind`, `multiple-value-list` | [02 — multiple values](lessons/02-values.md#capturing-both-returned-values) |
+| `defun`, parameters, `&optional`, `&rest`, `&key`, `let`/`let*`, `setf`/`incf` | [03 — functions and bindings](lessons/03-functions.md) |
+| `let` versus `let*`: initializer visibility, shadowing, and assignment | [03 — worked binding comparison](lessons/03-functions.md#local-bindings-and-assignment) |
+| Naming conventions, predicate suffixes, earmuffs, constants, constructor/accessor names, formatting and API style | [03 — naming](lessons/03-functions.md#naming-conventions), [course style guide](STYLE.md) |
+| `lambda`, closures, `funcall`, `#'`, `function`, `flet`/`labels` | [03 — lexical functions](lessons/03-functions.md#lexical-functions-and-closures), [06 — calling function values](lessons/06-sequences.md#calling-a-function-value) |
+| `defvar`/`defparameter`/`defconstant`, dynamic special variables | [03 — special variables](lessons/03-functions.md#special-dynamic-variables) |
+| `cond` versus `if`, `case`/`ecase`, `and`/`or`, numeric tests, `1+`/`1-` | [04 — decisions](lessons/04-control.md) |
+| `when`/`unless`, grouped bodies | [04 — one-sided tests](lessons/04-control.md#one-sided-tests-when-and-unless) |
+| `dotimes`, `dolist`, `loop`, recursion, `check-type`, interval type syntax, `return`/`return-from` | [04 — iteration and control](lessons/04-control.md) |
+| Cons/list accessors, copying/sharing, `push`/`pop`, `append`, `reverse`/`nreverse`, `assoc`/`getf`, `atom`, `destructuring-bind` | [05 — lists](lessons/05-lists.md) |
+| `apply`, mapping, filtering, `reduce`, sequence search/counting, `:key`/`:test`, sorting, `string<` | [06 — sequences](lessons/06-sequences.md) |
+| `vector`, `#(...)`, `make-array`, `aref`, fill pointers, string transformations, hash-table operations | [07 — collections](lessons/07-collections.md) |
+| `format`, `~` directives, streams, file options, reader/EOF arguments, `parse-integer`, `gensym`, pathnames | [08 — I/O](lessons/08-io.md) |
+| `defpackage`/`in-package`, `#:` and colon syntax, `*package*`, `find-package`, `require`, ASDF components/dependencies | [09 — systems](lessons/09-systems.md) |
+| `assert`, expected-error test preview, `abs`, inspection/tracing, `declaim`/`optimize` | [10 — testing](lessons/10-testing.md) |
+| `define-condition`, `error`/`warn`/`signal`, handlers, restarts, `declare (ignore ...)`, cleanup | [11 — conditions](lessons/11-conditions.md) |
+| `defstruct`, generated names, `defclass`, `make-instance`, `defgeneric`/`defmethod`, slots, `call-next-method` | [12 — objects](lessons/12-objects.md) |
+| `defmacro`, `&body`, backquote/comma/comma-at, `macroexpand-1`, fresh names, phase rules (`eval-when`) | [13 — macros](lessons/13-macros.md) |
+| `time`, type declarations, `simple-array`, `the`, `loop across`/`into`/`of-type`/`finally`, saved images | [14 — performance](lessons/14-performance.md) |
+| Application-defined names, constructor options, validation helpers, reader/printer settings, ASDF test options, UIOP and SBCL CLI helpers | [15 — reference source guide](lessons/15-capstone.md#reading-the-reference-source) |
+| Quicklisp, Alexandria, FiveAM, dependency introspection, optional test entry points | [Optional library module](optional/QUICKLISP.md) |
+| Git, `rlwrap`, local manuals, compiler configuration, CI | [Optional tools](optional/TOOLING.md) |
+| Editor/bridge installation, explicit runtime startup, greeting/reload/debugger verification | [Optional integrations](optional/EDITORS.md), [Emacs](optional/editors/EMACS.md), [Vim/Neovim](optional/editors/VIM.md), [VS Code/VSCodium](optional/editors/VSCODE.md) |
+
 ## Shell versus Lisp
 
 From a Linux shell, in the course directory:
@@ -64,7 +105,7 @@ Use `funcall` for a function held in a variable; `apply` spreads its final list.
 | Need | Useful operations / cautions |
 |---|---|
 | Exact arithmetic | `+ - * / expt mod`; integer division can return a ratio |
-| Quotient/remainder | `floor ceiling truncate round` return multiple values |
+| Quotient/remainder | `floor` down, `ceiling` up, `truncate` toward zero, `round` nearest/ties-to-even; each returns integer quotient and remainder ([worked examples](lessons/02-values.md#integer-quotients-rounding-and-remainders)) |
 | Lists | `cons list first rest car cdr null endp` |
 | List stacks | `push pop`, both update a place |
 | Copy | `copy-list` spine, `copy-tree` cons tree, `copy-seq` sequence |
