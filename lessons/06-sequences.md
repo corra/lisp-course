@@ -15,14 +15,14 @@ From [Lesson 05](05-lists.md):
   operations require ownership and attention to their returned result.
 
 Also recall function values, `lambda`, and `funcall` from
-[Lesson 03](03-functions.md#lexical-functions-and-closures). This lesson combines
+[Lesson 03](03-functions.md#lexical-scope-and-closures). This lesson combines
 them with collection traversal, filtering, reduction, and sorting.
 
 ## Calling a function value
 
 A **sequence** is a proper list or vector; strings are vectors of characters.
 `#'` denotes a function reference, and `lambda` supplies an anonymous function
-as introduced in [Lesson 03](03-functions.md#lexical-functions-and-closures).
+as introduced in [Lesson 03](03-functions.md#function-values-versus-local-function-names).
 
 ```lisp
 (funcall #'+ 2 3)           ; 5

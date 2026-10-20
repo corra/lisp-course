@@ -67,6 +67,68 @@ Packages do not load files or install dependencies. A **system** is a collection
 of source components and dependency/build instructions. A single system can
 contain several packages; neither is a Linux process.
 
+### Special variables and API name collisions
+
+[Lesson 03](03-functions.md#avoiding-collisions-a-preview-of-packages) previewed
+why nesting a `defparameter` or `defvar` does not isolate its name. The relevant
+identity is the **symbol**, not just its spelling. The same applies to function
+names, though variables and functions occupy separate namespaces on a symbol.
+
+Evaluate these forms in order in a fresh session. Each `in-package` must be
+processed before the following forms are read, so do not wrap the entire example
+in a single `progn`.
+
+```lisp
+(defpackage #:course-settings-a
+  (:use #:cl)
+  (:export #:*setting*))
+
+(defpackage #:course-settings-b
+  (:use #:cl)
+  (:export #:*setting*))
+
+(in-package #:course-settings-a)
+(defparameter *setting* 10)
+
+(in-package #:course-settings-b)
+(defparameter *setting* 20)
+
+(in-package #:cl-user)
+(list course-settings-a:*setting*
+      course-settings-b:*setting*) ; (10 20)
+
+(let ((course-settings-a:*setting* 99))
+  (list course-settings-a:*setting*
+        course-settings-b:*setting*)) ; (99 20)
+
+course-settings-a:*setting*     ; 10 again
+```
+
+Both packages use the spelling `*setting*`, but each owns a different symbol.
+Rebinding one does not change the other. The distinct package names themselves
+are important too: two libraries that choose the same package name do not obtain
+independent namespaces automatically.
+
+Within one package, repeating a definition uses the same symbol:
+
+```lisp
+(defparameter course-settings-a:*setting* 30)
+(defvar course-settings-a:*setting* 40)
+course-settings-a:*setting*     ; 30, not 40
+```
+
+Here `defparameter` overwrites the earlier value, while `defvar` preserves the
+existing bound value; neither diagnoses an accidental duplicate definition.
+Use distinctive package names, export the intended API, and prefer qualified
+references when combining libraries. If you import a symbol or make it accessible
+through `:use`, you are using that same symbol, not a copy. Trying to make two
+distinct exported symbols with the same name accessible without qualification
+causes a package name conflict that must be resolved; it does not merge them.
+
+An export marks an intended public interface, not an access-control boundary.
+Keep implementation state lexical when possible, and do not treat package
+internals or earmuffs as security mechanisms.
+
 ## A minimal ASDF system
 
 Create a separate `work/course-math/` directory containing:

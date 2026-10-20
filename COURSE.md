@@ -82,6 +82,16 @@ together.
 - Exercises referring to earlier lab functions require loading your saved
   definitions first. A fresh process does not contain yesterday's REPL definitions.
 
+The same rule applies to tooling: required commands and workflows must be taught
+before an exercise relies on them. [Lesson 00](lessons/00-environment.md) is the
+baseline terminology and SBCL user's guide for starting, loading, compiling, and
+recovering to the REPL. It introduces working definitions; later lessons explain
+specialist terms where first needed. Small one-off tool instructions belong inline where needed; fuller
+debugging coverage belongs in [Lesson 10](lessons/10-testing.md). Earlier labs
+must not silently assume that later tooling knowledge. Instructions to “trace”
+evaluation by hand mean a written walkthrough, not a debugger command, unless
+the exercise explicitly asks for tool-assisted tracing and explains how to use it.
+
 Use the [construct-to-lesson index](REFERENCE.md#where-constructs-are-taught) when
 you want to revisit the teaching section, rather than guessing from a name.
 

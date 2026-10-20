@@ -13,6 +13,7 @@ that every incidental name is a separate language feature.
 | Topic / constructs | Teaching location |
 |---|---|
 | Shell/REPL distinction, `load`, `compile-file`, SBCL invocation/exit | [00 — environment](lessons/00-environment.md) |
+| Starter vocabulary: forms, evaluation, bindings, arguments, sessions, tracing versus backtraces | [00 — terminology](lessons/00-environment.md#starter-terminology) |
 | Calls, `+ - * /`, quotation (`'`, `quote`), `list`, `if`, `progn` | [01 — evaluation](lessons/01-evaluation.md) |
 | `eval` preview and full explanation | [01 — preview](lessons/01-evaluation.md#preview-eval-treats-an-object-as-code), [13 — evaluation versus expansion](lessons/13-macros.md#evaluation-is-not-macro-expansion) |
 | Numbers, `#C`, float/ratio notation, predicates, equality, `t`/`nil`, keywords, `#\`, `coerce` | [02 — values](lessons/02-values.md) |
@@ -21,8 +22,13 @@ that every incidental name is a separate language feature.
 | `defun`, parameters, `&optional`, `&rest`, `&key`, `let`/`let*`, `setf`/`incf` | [03 — functions and bindings](lessons/03-functions.md) |
 | `let` versus `let*`: initializer visibility, shadowing, and assignment | [03 — worked binding comparison](lessons/03-functions.md#local-bindings-and-assignment) |
 | Naming conventions, predicate suffixes, earmuffs, constants, constructor/accessor names, formatting and API style | [03 — naming](lessons/03-functions.md#naming-conventions), [course style guide](STYLE.md) |
-| `lambda`, closures, `funcall`, `#'`, `function`, `flet`/`labels` | [03 — lexical functions](lessons/03-functions.md#lexical-functions-and-closures), [06 — calling function values](lessons/06-sequences.md#calling-a-function-value) |
-| `defvar`/`defparameter`/`defconstant`, dynamic special variables | [03 — special variables](lessons/03-functions.md#special-dynamic-variables) |
+| `lambda`, closures, `funcall` | [03 — lexical scope and closures](lessons/03-functions.md#lexical-scope-and-closures), [06 — calling function values](lessons/06-sequences.md#calling-a-function-value) |
+| Variable versus function namespaces, `#'`, `function` | [03 — function values versus names](lessons/03-functions.md#function-values-versus-local-function-names) |
+| `flet`, local function names and enclosing lexical variables | [03 — local named helpers](lessons/03-functions.md#flet-local-named-helpers) |
+| `labels`, helper-to-helper visibility, recursive and mutually recursive helpers | [03 — scope and comparison](lessons/03-functions.md#labels-helpers-that-can-call-local-helpers), [04 — recursive local helpers](lessons/04-control.md#recursive-local-helpers-with-labels) |
+| `defvar`/`defparameter`/`defconstant`, dynamic special variables, `declare (special ...)`, rebinding and closure behavior | [03 — special variables](lessons/03-functions.md#special-dynamic-variables) |
+| Nested `defparameter`/`defvar`, global proclamations versus current bindings | [03 — top-level placement](lessons/03-functions.md#top-level-placement-is-recommended-not-required) |
+| Special-variable API collisions, package-qualified symbols | [03 — preview](lessons/03-functions.md#avoiding-collisions-a-preview-of-packages), [09 — worked package example](lessons/09-systems.md#special-variables-and-api-name-collisions) |
 | `cond` versus `if`, `case`/`ecase`, `and`/`or`, numeric tests, `1+`/`1-` | [04 — decisions](lessons/04-control.md) |
 | `when`/`unless`, grouped bodies | [04 — one-sided tests](lessons/04-control.md#one-sided-tests-when-and-unless) |
 | `dotimes`, `dolist`, `loop`, recursion, `check-type`, interval type syntax, `return`/`return-from` | [04 — iteration and control](lessons/04-control.md) |

@@ -120,6 +120,53 @@ the closure's private counter, are ordinary lexical bindings: do not give them
 special-variable earmuffs or constant decorations. Explain exceptions using the
 [style guide](STYLE.md), rather than renaming the required API.
 
+For Lab 03.6, both calls use the same local function binding:
+
+```lisp
+(let ((offset 20))
+  (flet ((add-offset (number) (+ number offset)))
+    (list (add-offset 2) (funcall #'add-offset 5)))) ; (22 25)
+```
+
+`add-offset` is a function name, whereas a function stored in a variable must be
+called through `funcall`. `#'add-offset` obtains the locally named function object.
+
+The additional check belongs inside the `flet` body, where `add-offset` is visible:
+
+```lisp
+(let ((offset 20))
+  (flet ((add-offset (number) (+ number offset)))
+    (let ((helper #'add-offset))
+      (funcall helper 5)))) ; 25
+```
+
+`(helper 5)` would look for a function named `helper`, not read the variable's
+value. `funcall` calls that value. Neither check changes the `offset` binding.
+
+For Lab 03.7, the nested `flet` example returns `(6 105)` because `use-adjust`
+sees the enclosing `adjust`; the `labels` version returns `(6 6)` because its
+helper definitions see the new local names. Definition order does not change this.
+
+```lisp
+(labels ((triple (number) (* 3 number))
+         (triple-plus-one (number) (+ (triple number) 1)))
+  (triple-plus-one 4)) ; 13
+```
+
+For Lab 03.8, global describes the top-level binding; special describes dynamic
+binding and lookup. `let` temporarily rebinds a special variable; assignment
+inside it changes that temporary binding, not the global one. The previous
+binding is restored on leaving the body. `defvar` preserves an existing value,
+including `nil`; `defparameter` assigns its initializer's result each time.
+
+The lexical closure retains the `"Saved"` binding. The special reference uses
+the binding active when called, after its original temporary binding has ended,
+so it returns the global `"Report"`. With all declarations the local example
+returns `"Inner"`. Removing the innermost declaration makes that new binding
+lexical, so the helper's special reference still finds the dynamic `"Outer"`
+binding. A local declaration neither initializes a variable nor globally
+proclaims its name special.
+
 ## 04 — Control
 
 The executable answers show iterative factorial, sum of squares, and `safe-mean`.
@@ -135,9 +182,39 @@ An especially straightforward factorial alternative is:
 
 For empty input `safe-mean` returns `(values nil nil)`. For nonempty input it
 returns `(values (/ total count) t)`, preserving exact ratios when possible.
+For Lab 04.1, an accumulator initially equal to 1 gives the correct factorial
+of zero even when the loop body never runs. Lab 04.2 similarly uses an initial
+total of 0 for an empty sum; reject negative and non-integer `n` with
+`(check-type n (integer 0 *))` before looping.
+
 `return` exits the nearest lexically enclosing block named `nil` (often a loop).
 Tail-call optimization is not a language guarantee; large linear traversals
 should not depend on it.
+
+The loop-exit example returns `:after-loop` because leaving the loop does not
+skip subsequent function-body forms. `return-from function-exit-demo` instead
+leaves the function's named block and returns -2 immediately. Ordinary completion
+needs neither early-exit form. `(1- n)` computes a new argument without changing
+the caller's binding; `(incf n -1)` assigns a decremented value to that binding.
+
+For Lab 04.5, a local recursive implementation is:
+
+```lisp
+(defun sum-to-local (n)
+  "Return the sum of integers 1 through nonnegative integer N."
+  (check-type n (integer 0 *))
+  (labels ((sum-down (remaining)
+             (if (zerop remaining)
+                 0
+                 (+ remaining (sum-down (1- remaining))))))
+    (sum-down n)))
+```
+
+For 3, the pending computation is `3 + (2 + (1 + 0))`, giving 6. Zero is the
+base case, and each recursive argument decreases toward it. `labels` makes the
+helper's self-reference local; `flet` would instead look outside the new local
+definitions. Pending additions consume stack, so iteration is preferable for
+large inputs. `check-type` rejects negative and non-integer inputs before recursion.
 
 ## 05 — Lists
 

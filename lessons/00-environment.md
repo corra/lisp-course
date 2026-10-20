@@ -1,6 +1,6 @@
-# 00 — Linux setup and an editor-independent workflow
+# 00 — Terminology, Linux setup, and an editor-independent workflow
 
-**Goals:** install SBCL, distinguish shell from REPL, run and compile a source
+**Goals:** recognize basic course terminology, install SBCL, distinguish shell from REPL, run and compile a source
 file, and recover from errors without a particular editor. **Time:** 2–4 hours.
 
 ## Prerequisite recap
@@ -13,6 +13,48 @@ From your introductory programming experience, you should recognize:
 
 No Lisp syntax, Linux administration, or particular editor is assumed. This
 lesson establishes the tools and workflow needed for the rest of the course.
+
+## How to use this terminology and SBCL user's guide
+
+This lesson introduces the vocabulary and baseline toolchain: installation, shell versus
+REPL, loading and reloading source, scripts, compilation, and basic error recovery.
+Return to the relevant section when a later lab needs one of these operations.
+No prior SBCL debugger experience is assumed.
+
+Later lessons explain small new tool operations inline before requiring them.
+[Lesson 10](10-testing.md) expands the guide with function-call tracing and
+interactive debugging; [Lesson 11](11-conditions.md) explains conditions and
+restarts more fully. You do not need those later tools for early exercises that
+ask you to follow evaluation by hand: write down the steps, predict the result,
+then check it at the REPL.
+
+## Starter terminology
+
+These are working definitions, not features you must already know how to use.
+Later lessons develop the language concepts with examples.
+
+| Term | Meaning in this course |
+|---|---|
+| Common Lisp / SBCL | Common Lisp is the language; SBCL is the implementation that reads, compiles, and runs our programs. |
+| Terminal / shell | A terminal is the window or interface carrying text input/output; a shell is a command interpreter running there. SBCL is a different program you can launch from the shell. |
+| Toolchain | The tools used to edit, run, compile, test, and debug programs. |
+| REPL / prompt | A read–eval–print loop accepts Lisp input repeatedly. A prompt indicates that a shell, REPL, or debugger is waiting for input; those contexts accept different commands. |
+| Source / compiled file | Source is the `.lisp` text you edit. A compiled file (usually `.fasl` in SBCL) contains processed code that Lisp can load. |
+| Form / expression | Lisp code considered for evaluation, such as `42` or `(+ 20 22)`. Parenthesized forms can be calls or other language constructs; not every list is a function call. |
+| Evaluate / return / print | Evaluate means compute according to the language's rules. Returning supplies values to a caller; printing writes text to an output destination. These are separate actions. |
+| Function / call / body | A function is a callable computation; a call invokes it. Its body is the code executed when it is called. |
+| Parameter / argument | A parameter is a name in a function definition; an argument is a value supplied by a call. |
+| Variable / binding / scope | A variable is a name used to access a value. A binding associates that name with a value; scope determines where references use that binding. Lesson 03 develops this distinction. |
+| Initializer / assignment | An initializer computes a binding's initial value. Assignment changes an existing place, such as a variable's value. |
+| Definition / load | A definition establishes something such as a named function. Loading reads and evaluates a file's forms; it does not necessarily call every function defined there. |
+| Session / image state | A running Lisp retains definitions and other state. A fresh process starts a new session rather than inheriting your earlier REPL experiments. |
+| Error / debugger / restart | An error reports a problem; an interactive debugger lets you investigate it. An offered restart is a particular recovery action, not necessarily restarting SBCL. |
+| Walkthrough / call trace / backtrace | A walkthrough follows evaluation by hand. A call trace reports function calls and returns while running. A backtrace shows the active call stack at a point in execution. They are not interchangeable. |
+
+Use this as a reference, not a memorization test. Lesson 01 explains forms and
+evaluation, Lesson 03 explains bindings and scope, and Lesson 10 introduces
+tool-assisted tracing and debugging. New specialist terminology should still be
+explained where it is first needed.
 
 ## 1. Install the essentials
 
