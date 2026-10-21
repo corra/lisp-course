@@ -23,9 +23,11 @@ data structures in some programming language. You do **not** need recursion,
 functional programming, macros, object-oriented programming, or Unix expertise.
 
 Plan for **100–130 hours**, roughly 12–16 weeks at 8 hours/week. This is an estimate,
-not a deadline. Each lesson takes 4–6 hours including exercises; setup takes 2–4,
-and the capstone 16–24. Spend extra time on evaluation, list sharing, and scope:
-later topics depend on them.
+not a deadline. Most lessons take 4–6 hours including exercises; setup takes 2–4,
+and the capstone 16–24. Treat the three milestones as separate integration
+sessions, not extra work to squeeze into the preceding lesson's first sitting.
+The whole-course estimate includes those projects. Spend extra time practicing
+evaluation, bindings, and list sharing, rather than memorizing reference details.
 
 Allow another **6–9 hours** for the optional library/tooling modules. Editor
 integration setup is discretionary and varies with your chosen environment.
@@ -34,12 +36,56 @@ Suggested progression:
 
 | Stage | Lessons | Evidence of readiness |
 |---|---|---|
-| Environment | 00 | Run a file, reload it, deliberately recover from an error |
-| Foundations | 01–04 | Explain an expression and write a small numerical program |
+| Environment | 00 core | Run a file, reload it, deliberately recover from an error |
+| Foundations | 01–04 core | Explain an expression and write a small numerical program |
 | Data and functions | 05–08 | Transform collections and process a file safely |
 | Engineering | 09–11 | Build a system, test it, inspect failures, recover deliberately |
 | Abstraction | 12–14 | Choose objects/macros carefully and measure before optimizing |
 | Integration | 15 | Deliver the task tracker and demonstrate its failure cases |
+
+### Core path versus reference material
+
+The intended learner is new to Lisp, not already fluent in its scope machinery.
+Learn a useful pattern, practice it, and only then compare alternatives. A lesson
+should not answer every possible language-lawyer question before its first lab.
+
+- **Core / learn now:** enough explanation and worked examples for the current
+  lab. Complete these before relying on them in the next lesson.
+- **Guided second pass:** a small extension after the basic task works. Its
+  scheduled revisit is stated; it must not silently become an earlier prerequisite.
+- **Optional reference / later recognition:** consult when a real task needs it.
+  This is not a memorization assignment or an extra core acceptance requirement.
+  Essential correctness warnings (such as not mutating literals) still apply.
+
+| Lesson | First useful outcome | Return to later |
+|---|---|---|
+| 00 | Edit/load/run a greeting; recover to the REPL | Compilation in 09; integrations only if wanted |
+| 01 | Predict calls, quotation, `if`, and `progn` | Macro implementation and `eval` in 13 |
+| 02 | Exact arithmetic, truth, appropriate equality, observing multiple values | Detailed rounding in the numeric reference; named multiple-value capture in 07 |
+| 03 | Small functions, `let`/`let*`, assignment, keyword defaults, ordinary top-level settings | Closure exercises in 06; special declarations after 08, only if needed |
+| 04 | Branches, loop accumulators, a direct recursive example | Local recursive helpers on a second pass or in 06; extra control syntax by lookup |
+| 05 | Construct, traverse, copy, and safely change lists | Tree recursion and destructuring after the core lab |
+| 06 | Call/pass functions, transform collections, preserve ownership | Revisit steppers; local helpers next; unusual argument lists by lookup |
+| 07 | Choose vectors/strings/hash tables; distinguish absence from stored `nil` | Multidimensional arrays and text-policy details as needed |
+| 08 | Read/write text and strictly parse numbers | Lisp-object persistence after 09, before capstone persistence |
+| 09 | Define a package, then build/load a small ASDF system | Symbol-collision examples and compilation details after the first system works |
+| 10 | Assert results, run tests in batch, inspect one failure | Compiler-debug settings only if needed |
+| 11 | Handle a known failure, define a domain condition, then offer one restart | Low-level cleanup and other signaling variants by lookup |
+| 12 | Build a record, render a class, then add a subclass | Multiple dispatch, method combination, slot types |
+| 13 | Inspect a macro expansion and preserve once-only evaluation | `eval` scope and phase-control rules |
+| 14 | Measure correct algorithms before optimizing | Typed kernels, profiling, saved executables |
+| 15 | In-memory core first, then persistence, then CLI | Reference-source tables only for the feature currently being added |
+
+You can start the capstone after the core work through 12 and the milestones;
+writing macros and tuning compiler declarations are not entrance requirements.
+For the full course, still work through 13–14, either before or alongside the
+capstone. In early lessons, do not require an exhaustive API, ownership, type,
+or portability audit before a learner has written a working function.
+
+Extensions are labelled where they appear: Lab 03.5 (closures) is revisited as
+Lab 06.5, and Lab 04.5 is a guided second pass, not a gate to Lesson 05.
+Assess core and extension work
+separately rather than treating every numbered item as an immediate prerequisite.
 
 ### Optional routes without changing the main course
 
@@ -51,6 +97,9 @@ Suggested progression:
 - **After 10:** revisit development compiler settings and the supplied core CI job.
 - **After 13:** explore Alexandria's macro helpers, relating them to expansions
   you already understand rather than using them as magic.
+- **When a question calls for it:** [numeric details](optional/NUMBERS.md) after
+  02, and [dynamic scope and special declarations](optional/DYNAMIC-SCOPE.md)
+  after 08. These preserve deeper explanations outside the beginner core path.
 - **At any point:** read [editors and integrations](optional/EDITORS.md). Its
   editor-specific installation guides include isolated configurations and a
   shared verification exercise. Adopt an integration only if helpful; keep the
@@ -76,7 +125,7 @@ together.
   the surrounding example supplies a binding. Source-file contents and deliberate
   error demonstrations are labelled rather than presented as ordinary REPL calls.
 - `:name` is keyword-symbol notation (Lesson 02), `#'name` denotes a function
-  reference (Lesson 03), and `package:name` is package qualification (Lesson 09).
+  reference (Lesson 06), and `package:name` is package qualification (Lesson 09).
   Each has a brief introduction where used earlier. Context matters: the same
   printed symbol can be a variable, function name, type name, or syntax marker.
 - Exercises referring to earlier lab functions require loading your saved
@@ -86,8 +135,9 @@ The same rule applies to tooling: required commands and workflows must be taught
 before an exercise relies on them. [Lesson 00](lessons/00-environment.md) is the
 baseline terminology and SBCL user's guide for starting, loading, compiling, and
 recovering to the REPL. It introduces working definitions; later lessons explain
-specialist terms where first needed. Small one-off tool instructions belong inline where needed; fuller
-debugging coverage belongs in [Lesson 10](lessons/10-testing.md). Earlier labs
+specialist terms where first needed. Small one-off tool instructions belong
+inline where needed; fuller debugging coverage belongs in
+[Lesson 10](lessons/10-testing.md). Earlier labs
 must not silently assume that later tooling knowledge. Instructions to “trace”
 evaluation by hand mean a written walkthrough, not a debugger command, unless
 the exercise explicitly asks for tool-assisted tracing and explains how to use it.
@@ -106,9 +156,16 @@ the introductory programming knowledge assumed by the course.
    **before** evaluating it.
 2. Type examples into a file; load them into a fresh SBCL session.
 3. Change one thing and explain the new result. Keep a prediction journal.
-4. Complete the numbered lab; include normal, boundary, and invalid-input tests.
+4. Complete the core lab; check normal and boundary cases, plus invalid inputs
+   where the exercise promises validation. Take extension exercises at their
+   stated revisit point rather than treating them as a gate to the next lesson.
 5. Consult [solutions](SOLUTIONS.md) only after a genuine attempt.
 6. Close SBCL and rerun from a fresh process. Hidden REPL state is not a dependency.
+
+Follow the lesson's core/extension labels. Before Lesson 10, checking returned
+values at the REPL and recording deliberate errors is sufficient: you are not
+expected to invent an automated test harness or learn handlers ahead of time.
+Avoid consulting all optional links during the first reading.
 
 Use the terminal workflow throughout, even if you later add editor integration.
 Use `work/` for scratch exercises, but remember that it is ignored by Git: back
@@ -131,7 +188,7 @@ their exercise numbers; and numbered **Review questions** are oral or written
 self-tests. The larger capstone uses a numbered development sequence and a
 project-wide acceptance checklist, followed by its marking rubric.
 
-A completed lab must be reproducible in a fresh process and explain its design,
+A completed core lab must be reproducible in a fresh process and explain its design,
 not merely print one correct answer. Use the checklists to verify your work,
 not as additional unnumbered exercises.
 

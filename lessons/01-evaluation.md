@@ -1,7 +1,7 @@
 # 01 — Reading and evaluating Lisp
 
 **Goals:** read nested forms; separate reading from evaluation; understand
-quotation and special operators. **Prerequisite:** 00. **Time:** 4–6 hours.
+quotation and conditional evaluation. **Prerequisite:** 00 core path. **Time:** 4–6 hours.
 
 ## Prerequisite recap
 
@@ -25,11 +25,11 @@ or function-definition syntax to complete this lesson.
 
 Lisp source consists of **forms**. Parentheses group expressions, not merely
 function arguments. In an ordinary function call, the first position names the
-operation and the remaining forms produce arguments:
+operation and the remaining forms produce arguments.
 
 The ordinary numeric functions `+`, `-`, `*`, and `/` mean addition, subtraction,
 multiplication, and division. They are written before their operands rather than
-between them. [Lesson 02](02-values.md) develops their numeric results.
+between them. [Lesson 02](02-values.md) develops their numeric results:
 
 ```lisp
 (+ 2 3)                  ; 5
@@ -131,38 +131,10 @@ With no enclosed forms, `(progn)` returns `nil`. In Lesson 02 you will also lear
 that a form can return multiple values; `progn` preserves the last form's values,
 not just its primary value.
 
-### Previews: `let`, `when`, and `defun`
-
-You will meet these names in explanations and examples. Here is enough to
-recognize their purpose; **their full use is not required in Lab 01**:
-
-| Form | Purpose | Where it is taught |
-|---|---|---|
-| `let` | Create local variable bindings for a body of forms | [Lesson 03 — local bindings](03-functions.md#local-bindings-and-assignment) |
-| `defun` | Define a named function with parameters and a body | [Lesson 03 — definitions](03-functions.md#definitions-and-argument-lists); first encountered in Lesson 00's setup file |
-| `when` | Run a body of forms only when a test is true | [Lesson 04 — one-sided tests](04-control.md#one-sided-tests-when-and-unless) |
-
-For example, this `when` has the same behavior as the preceding `if`: a true test
-prints the message and returns `42`. If the test is false, it does nothing and
-returns `nil`, rather than the `0` used by that `if`.
-
-```lisp
-(when (> 4 2)
-  (format t "The test passed.~%")
-  (+ 20 22))
-```
-
-`when` already accepts several body forms, so you do not need an extra `progn`
-inside it. Function bodies defined with `defun` similarly execute their body
-forms in order and return the last form's values; Lesson 03 explains this when
-you start defining your own functions. There is no mandatory final `return`
-statement.
-
-`if`, `progn`, `let`, and `quote` are special operators. `when` and `defun` are
-macros, not ordinary function calls. This classification explains why they need
-not follow ordinary argument-evaluation rules; it is not a requirement to learn
-their implementation now. [Lesson 13](13-macros.md) teaches macro expansion and
-writing macros. You can use a macro long before learning to write one.
+You have enough forms for this lab. Lesson 03 teaches `defun` and local
+variables; Lesson 04 teaches `when` and loops. You do not need to learn them
+or classify every language construct before moving on. Macro writing waits
+until Lesson 13; using standard control constructs does not require it.
 
 Symbols are normally read case-insensitively and displayed uppercase. `hello`,
 `HELLO`, and `Hello` normally denote the same symbol. Strings preserve case.
@@ -171,8 +143,7 @@ Avoid escaped symbol names such as `|MiXeD|` while learning.
 For names you choose, write lowercase words separated by hyphens, such as
 `task-count`, rather than `taskCount` or `task_count`. Hyphens inside a symbol
 are part of its name, not subtraction operators. [Lesson 03's naming guide](03-functions.md#naming-conventions)
-explains predicates, special variables, constants, constructors, and the
-difference between community conventions and language rules.
+develops the conventions when you begin choosing function and variable names.
 
 ## Predict, then test
 
@@ -181,27 +152,6 @@ difference between community conventions and language rules.
 (if nil "left" "right") ; "right"
 (progn (+ 1 2) (+ 3 4))  ; 7
 ```
-
-### Preview: `eval` treats an object as code
-
-`eval` is a function that takes a Lisp object and evaluates it as a form. For
-example, quotation below first supplies a list as data; `eval` then treats that
-list as an expression to execute:
-
-```lisp
-'(+ 1 2)        ; the list (+ 1 2), without performing the addition
-(eval '(+ 1 2)) ; 3
-```
-
-You do **not** need `eval` for an ordinary expression such as `(+ 1 2)`: Lisp
-already evaluates that expression normally. Nor should you use it just to call
-a function or process list data. You do not need to use `eval` in Lab 01.
-
-[Lesson 06](06-sequences.md) teaches `funcall` and `apply` for calling function
-values. [Lesson 08](08-io.md#parse-user-input-dont-evaluate-it) explains why user
-input must not be executed as code. The fuller explanation of `eval`, including
-its scope rules and how it differs from macro expansion, is in
-[Lesson 13 — evaluation versus expansion](13-macros.md#evaluation-is-not-macro-expansion).
 
 ## Lab 01 — Expression notebook
 

@@ -14,17 +14,24 @@
 
 (defun factorial-iter (n)
   (check-type n (integer 0 *))
-  (loop for i from 1 to n for result = i then (* result i)
-        finally (return (if (zerop n) 1 result))))
+  ;; Starting at 1 makes zero iterations return the correct factorial of 0.
+  (let ((result 1))
+    (dotimes (i n result)
+      (setf result (* result (1+ i))))))
 
 (defun sum-squares (n)
   (check-type n (integer 0 *))
   (loop for i from 1 to n sum (* i i)))
 
 (defun safe-mean (numbers)
-  (if (null numbers)
-      (values nil nil)
-      (values (/ (reduce #'+ numbers) (length numbers)) t)))
+  (let ((count 0)
+        (total 0))
+    (dolist (n numbers)
+      (incf count)
+      (incf total n))
+    (if (zerop count)
+        (values nil nil)
+        (values (/ total count) t))))
 
 ;; Lessons 05–06: lists and sequences.
 (defun count-occurrences (item items)
@@ -42,7 +49,9 @@
   (mapcar (lambda (n) (* n n)) (remove-if-not #'plusp numbers)))
 
 (defun total-by (projection items)
-  (reduce #'+ items :key projection :initial-value 0))
+  (let ((total 0))
+    (dolist (item items total)
+      (incf total (funcall projection item)))))
 
 (defun sorted-scores (entries)
   (sort (copy-list entries)
@@ -60,12 +69,9 @@
     (dolist (item items table)
       (incf (gethash item table 0)))))
 
-(define-condition missing-key (error)
-  ((key :initarg :key :reader missing-key-key)))
-
 (defun lookup-or-error (key table)
   (multiple-value-bind (value present-p) (gethash key table)
-    (unless present-p (error 'missing-key :key key))
+    (unless present-p (error "Missing key: ~S" key))
     value))
 
 (defun square-buffer ()
@@ -73,17 +79,17 @@
     (dotimes (i 10 buffer)
       (vector-push-extend (* i i) buffer))))
 
-(defun count-stream-lines (stream)
-  (loop for line = (read-line stream nil nil) while line count t))
+(defun count-lines-in (in)
+  (loop for line = (read-line in nil nil) while line count t))
 
 (defun count-lines (path)
   (with-open-file (in path :direction :input)
-    (count-stream-lines in)))
+    (count-lines-in in)))
 
 (defun parse-positive-integer (text)
   (let ((number (parse-integer text)))
     (unless (plusp number)
-      (error 'type-error :datum number :expected-type '(integer 1 *)))
+      (error "Expected a positive integer"))
     number))
 
 ;; Lesson 11: caller-selected recovery.
@@ -102,7 +108,7 @@
     (use-zero () :report "Use zero." 0)))
 
 ;; Lesson 12: records and generic behavior.
-(defstruct reading (sensor "unknown" :type string) (value 0 :type real))
+(defstruct reading (sensor "unknown") (value 0))
 
 (defclass sensor-alert ()
   ((message :initarg :message :reader alert-message)))
@@ -163,27 +169,35 @@
       (check (equal '(9 2 3) result)))
     (check (equal '(9 1) (positive-squares '(-2 0 3 1))))
     (check (null (positive-squares nil)))
-    (check (= 10 (total-by #'length '("abc" "1234567"))))
+    (check (= 8 (total-by #'cdr (list (cons "Ada" 5) (cons "Bob" 3)))))
+    (check (= 6 (total-by #'identity '(1 2 3))))
     (check (= 0 (total-by #'identity nil)))
-    (let* ((input (list (cons "Bob" 3) (cons "Ada" 3) (cons "Zoe" 4)))
-           (before (copy-list input)))
-      (check (equal '("Zoe" "Ada" "Bob") (mapcar #'car (sorted-scores input))))
+    (let* ((input (list (cons (copy-seq "Bob") 3)
+                        (cons (copy-seq "Ada") 3)
+                        (cons (copy-seq "Zoe") 4)))
+           ;; Copy both the pairs and their mutable names. A shallow snapshot
+           ;; would share score/name changes with INPUT and miss mutation bugs.
+           (before (mapcar (lambda (entry)
+                             (cons (copy-seq (car entry)) (cdr entry)))
+                           input))
+           (result (sorted-scores input)))
+      (check (equal '(("Zoe" . 4) ("Ada" . 3) ("Bob" . 3)) result))
       (check (equal before input)))
     (check (= 10 (sum-positive-squares '(-2 0 3 1))))
     (let ((table (frequencies (list (copy-seq "a") (copy-seq "a")))))
       (check (= 2 (gethash "a" table)))
       (setf (gethash "nil" table) nil)
       (check (null (lookup-or-error "nil" table)))
-      (check (signals missing-key (lookup-or-error "absent" table))))
+      (check (signals simple-error (lookup-or-error "absent" table))))
     (check (equalp #(0 1 4 9 16 25 36 49 64 81) (square-buffer)))
     (dolist (case (list (cons "" 0) (cons (string #\Newline) 1)
                        (cons (format nil "one~%two") 2)))
       (with-input-from-string (in (car case))
-        (check (= (cdr case) (count-stream-lines in)))))
+        (check (= (cdr case) (count-lines-in in)))))
     (check (= 42 (parse-positive-integer " 42 ")))
     (check (signals parse-error (parse-positive-integer "3x")))
-    (check (signals type-error (parse-positive-integer "0")))
-    (check (signals type-error (parse-positive-integer "-1")))
+    (check (signals simple-error (parse-positive-integer "0")))
+    (check (signals simple-error (parse-positive-integer "-1")))
     (check (= 0 (validated-score 0)))
     (check (= 100 (validated-score 100)))
     (dolist (value '(-1 101 "1"))

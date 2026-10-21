@@ -17,6 +17,11 @@ From [Lesson 06](06-sequences.md):
 This lesson develops the alternative representations behind those interfaces:
 arrays/vectors, strings, and hash tables for keyed lookup.
 
+**Work in short stages:** change one vector element, transform one string, then
+build a tiny hash table. Only combine them after each works independently.
+The growable-vector recipe is for exercise 3; multidimensional arrays and
+Unicode caveats are reference context, not new algorithms to implement here.
+
 ## Arrays and vectors
 
 A vector is a one-dimensional array. General arrays can have multiple dimensions.
@@ -84,6 +89,20 @@ splitting examples deliberately use a small ASCII whitespace set.
 
 ## Hash tables and the missing-value problem
 
+First, learn named capture of multiple values. Lesson 02 used
+`multiple-value-list` to examine them together. Now that `let` bindings are
+familiar, give each returned value its own local name:
+
+```lisp
+(multiple-value-bind (quotient remainder) (floor 7 3)
+  (list quotient remainder)) ; (2 1)
+```
+
+The shape is `(multiple-value-bind (names...) value-form body...)`. It evaluates
+value-form once, binds successive results to the names, and returns the body's
+last values. These names are chosen locally, not calls or global definitions.
+Use this same pattern for the value and presence flag returned by `gethash`.
+
 ```lisp
 (let ((table (make-hash-table :test #'equal)))
   (setf (gethash "Ada" table) nil)
@@ -117,6 +136,8 @@ sort separately. Hash tables are good for lookup, not an implicit ordering polic
 For Lab 07's failure case, `(error "Missing key: ~S" key)` signals a failure
 with a formatted message. This is a preview of [Lesson 11](11-conditions.md),
 which teaches custom conditions and handling; you need only signal the error now.
+Check the missing-key case separately at the REPL and use Lesson 00's abort
+procedure; automated expected-error tests wait until Lesson 10.
 
 ## Lab 07 — Counting and lookup
 

@@ -17,6 +17,11 @@ From [Lesson 13](13-macros.md):
 With abstraction and correctness established, this lesson turns to measurement,
 responsible compiler declarations, and reproducible delivery.
 
+**Core path:** compare two correct algorithms, measure representative input,
+and explain the result. Compiler declarations and executable-image building are
+optional follow-ups. You can complete the lab and deliver the capstone from
+source without either. Do not add declarations simply because this lesson lists them.
+
 ## Algorithm and representation first
 
 Before optimizing, establish correctness with tests. Measure representative input
@@ -47,6 +52,9 @@ SBCL offers statistical and allocation profiling extensions; consult its manual
 when `time` no longer identifies the relevant cost. Profiling APIs are not ANSI.
 
 ## Types are promises, not conversions
+
+**Optional reference after the measurement lab.** The specialized-array example
+combines several advanced features; it is not a template for ordinary functions.
 
 ```lisp
 (defun sum-double-vector (samples)
@@ -126,7 +134,8 @@ changes the capstone's library requirements or assumes an editor integration.
 2. Compare them on at least three input sizes. Record commands, environment,
    times, and allocations without claiming universal speed ratios.
 3. Benchmark your word-frequency report on generated input and identify its
-   dominant cost.
+   dominant cost. Wrap `time` around each stage separately (reading the file,
+   tokenizing, counting, sorting, printing) on the same input, then compare.
 4. Justify an optimization or explain why you would not optimize. Keep safety enabled.
 
 ### Acceptance checklist
@@ -140,6 +149,6 @@ changes the capstone's library requirements or assumes an editor integration.
 ### Review questions
 
 1. Why can a data structure change beat compiler tuning?
-2. Why does a type declaration not replace validation?
+2. Optional declaration review: why does a type declaration not replace validation?
 3. What is portable about source delivery that is not portable about an SBCL
    executable image?

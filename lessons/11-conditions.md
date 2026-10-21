@@ -17,6 +17,29 @@ From [Lesson 10](10-testing.md):
 You have briefly used `handler-case` in tests. This lesson explains conditions,
 handler behavior, and caller-selected recovery through restarts.
 
+**Two study sessions:** first handle a familiar built-in error, then define a
+condition for your domain. Once those work, add one restart and compare stopping
+with recovery. The importer milestone is a separate integration task, not the
+first example to write. Cleanup machinery and the other signaling operations
+are follow-up reading; no special-variable declarations are needed for this lab.
+
+## Start with a familiar failure
+
+```lisp
+(defun checked-score (value)
+  "Return VALUE if it is an integer from 0 through 100; otherwise signal a type error."
+  (check-type value (integer 0 100))
+  value)
+
+(handler-case (checked-score 150)
+  (type-error () :rejected)) ; :REJECTED
+```
+
+This uses the validation and expected-error pattern you already know. The
+handler runs after leaving the failing computation; it returns `:rejected`,
+not a corrected value to the original `check-type` operation. Next give the
+failure a domain-specific name so callers can distinguish it from unrelated bugs.
+
 ## Beyond a single exception mechanism
 
 A **condition** describes a situation. Some are informational, some warnings,
@@ -108,6 +131,10 @@ matters. Export names intended for callers or provide a public recovery function
 normally or by nonlocal exit. It is for cleanup, not selecting recovery policy;
 `with-open-file` already uses this kind of resource discipline for you.
 
+**Follow-up reference:** you need not write your own cleanup construct for the
+score exercise. Keep using `with-open-file` for the file resources introduced
+earlier; study `unwind-protect` when managing a resource without such a wrapper.
+
 Its general shape is `(unwind-protect protected-form cleanup-form...)`: cleanup
 runs when control leaves the protected form, including through an error or
 `return-from`. It is not needed around a stream already managed by
@@ -129,7 +156,9 @@ unexpected errors clearly at a CLI boundary and exit unsuccessfully.
 2. Test values 0, 100, -1, 101, and a string.
 3. Prove invalid input errors without a handler and returns 0 with the recovery
    handler. Valid input must not invoke the restart.
-4. Complete milestone 3: an importer offering `skip-record` for invalid records.
+4. **Separate integration session:** complete milestone 3, an importer offering
+   `skip-record` for invalid records. First validate one record, then offer one
+   restart, then add traversal; do not implement all layers at once.
 
 ### Acceptance checklist
 

@@ -23,19 +23,25 @@
   (error 'bad-data :detail (apply #'format nil control arguments)))
 
 (defun valid-title-p (value)
+  ;; One line per task keeps LIST output unambiguous.
   (and (stringp value)
-       (plusp (length (string-trim '(#\Space #\Tab #\Newline #\Return)
-                                  value)))))
+       (not (or (find #\Newline value) (find #\Return value)))
+       (plusp (length (string-trim '(#\Space #\Tab) value)))))
+
+(defun owned-title (title)
+  ;; A fresh CHARACTER string. SBCL's command-line arguments are base strings,
+  ;; which *PRINT-READABLY* would save in SBCL-specific #A syntax, not "...".
+  (make-array (length title) :element-type 'character :initial-contents title))
 
 (defun detached-task (task)
   ;; The structure copier alone would leave the title string shared.
-  (%make-task (task-id task) (copy-seq (task-title task)) (task-done-p task)))
+  (%make-task (task-id task) (owned-title (task-title task)) (task-done-p task)))
 
 (defun add-task (store title)
-  "Add a nonblank TITLE. Return a detached record with a fresh positive ID."
+  "Add a nonblank, single-line TITLE. Return a detached record with a fresh ID."
   (unless (valid-title-p title)
-    (reject-data "Title must be a nonblank string."))
-  (let ((task (%make-task (store-next-id store) (copy-seq title) nil)))
+    (reject-data "Title must be a nonblank, single-line string."))
+  (let ((task (%make-task (store-next-id store) (owned-title title) nil)))
     (incf (store-next-id store))
     (push task (store-tasks store))
     (detached-task task)))
@@ -90,7 +96,7 @@
         (when (gethash id seen) (reject-data "Duplicate ID ~D." id))
         (setf (gethash id seen) t
               largest-id (max largest-id id))
-        (push (%make-task id (copy-seq title) done-p) (store-tasks store))))
+        (push (%make-task id (owned-title title) done-p) (store-tasks store))))
     (unless (> next-id largest-id)
       (reject-data "Next ID must exceed every existing ID."))
     (setf (store-next-id store) next-id)
@@ -115,7 +121,7 @@
   (with-open-file (in path :direction :input :external-format :utf-8)
     (with-standard-io-syntax
       (let ((*read-eval* nil)
-            (*package* (find-package :course-tasks))
+            (*package* (find-package :course-tasks.data))
             (eof (gensym "EOF")))
         (handler-case
             (let ((data (read in nil eof)))

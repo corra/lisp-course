@@ -17,6 +17,11 @@ From [Lesson 08](08-io.md):
 This lesson applies that explicitness to project structure: packages organize
 names, while ASDF describes how source files and systems are built and loaded.
 
+**Two passes:** first create one package and call its exported function. Then
+put that working example in separate files and load it with ASDF. Package name
+conflicts and compile-time helpers are follow-up references, not prerequisites
+for your first successful system load.
+
 ## Packages organize symbols
 
 `CL` is the package containing standard Common Lisp symbols. A normal fresh
@@ -69,8 +74,9 @@ contain several packages; neither is a Linux process.
 
 ### Special variables and API name collisions
 
-[Lesson 03](03-functions.md#avoiding-collisions-a-preview-of-packages) previewed
-why nesting a `defparameter` or `defvar` does not isolate its name. The relevant
+**Follow-up example; skip to the minimal ASDF system on the first pass.**
+[Lesson 03](03-functions.md#top-level-variables-for-shared-settings) introduced
+top-level settings without promising name isolation. The relevant
 identity is the **symbol**, not just its spelling. The same applies to function
 names, though variables and functions occupy separate namespaces on a symbol.
 
@@ -157,11 +163,11 @@ Create a separate `work/course-math/` directory containing:
                (:file "math")))
 ```
 
-In a fresh SBCL started from the course directory:
-
 `require` asks the implementation to provide a named module. `(require :asdf)`
 loads/registers the ASDF supplied with SBCL; it is not a general command to fetch
 missing internet libraries. Evaluate it before reading `asdf:`-qualified forms.
+
+In a fresh SBCL started from the course directory:
 
 ```lisp
 (require :asdf)
@@ -191,12 +197,16 @@ The [capstone source guide](15-capstone.md#reading-the-reference-source) explain
 `:in-order-to`, `:perform`, and `asdf:test-op` used to configure that test operation.
 These build-system options are not needed to understand the minimal ASD above.
 
-**Optional next step:** [Quicklisp, Alexandria, and FiveAM](../optional/QUICKLISP.md)
+**Optional after this lab:** [Quicklisp, Alexandria, and FiveAM](../optional/QUICKLISP.md)
 adds explicit dependency acquisition to this model. Read its setup and utility
 sections now; complete the named test-suite lab after Lesson 10. The main course
 and capstone keep using ASDF without any third-party library requirement.
 
 ## Compile time versus load time
+
+Now complete the deferred [Lab 00.3 compilation recipe](00-environment.md#4-scripts-and-noninteractive-checks)
+if you skipped it. Source loading is already familiar, so compare it with
+compiling and then loading the resulting `.fasl`.
 
 Compiled Lisp still supports interactive function redefinition. Compilation does
 not imply a static, permanently sealed application. Conversely, a fresh process
@@ -218,14 +228,15 @@ names or an intentional `in-package` when calling your API.
 
 1. Organize your Lesson 06 functions as `course-sequences`, with a package file
    and a separate implementation file.
-2. Export `positive-squares` and `total-by` as the public API; keep helpers internal.
+2. Export `positive-squares`, `total-by`, and `sorted-scores` as the public API;
+   keep helpers internal.
 3. Add an ASDF definition with the required component order.
 4. Add public-function docstrings and a README with reproducible load commands.
 
 ### Acceptance checklist
 
 - [ ] Exercise 1: package and implementation definitions live in separate files.
-- [ ] Exercise 2: both public functions are callable by their exported names;
+- [ ] Exercise 2: all three public functions are callable by their exported names;
   an unexported helper is not presented as public API.
 - [ ] Exercise 3: a fresh SBCL process can explicitly load the ASD and system
   without definitions from `CL-USER` or init files.

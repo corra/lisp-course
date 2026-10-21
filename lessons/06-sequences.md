@@ -1,97 +1,120 @@
 # 06 — Functions as values and sequence processing
 
-**Goals:** use higher-order functions, closures, sequences, and explicit
+**Goals:** pass functions as values, transform collections, and choose explicit
 comparison policies. **Prerequisite:** 05. **Time:** 4–6 hours.
 
 ## Prerequisite recap
 
-From [Lesson 05](05-lists.md):
+- Lists can share cells. Copying their spine does not copy nested objects.
+- Do not mutate quoted literals; copy caller-owned data before destructive work.
+- Functions have parameters and local working bindings. So far, most calls have
+  named the function directly, as in `(+ 2 3)`.
 
-- Lists are linked cons structures. `car`/`first` and `cdr`/`rest` access their
-  parts; different lists can share cells or nested objects.
-- `copy-list` copies the spine, not every referenced object. Never mutate
-  quoted literals; document whether callers and results share mutable data.
-- `push` followed by `nreverse` can build a list efficiently, but destructive
-  operations require ownership and attention to their returned result.
-
-Also recall function values, `lambda`, and `funcall` from
-[Lesson 03](03-functions.md#lexical-scope-and-closures). This lesson combines
-them with collection traversal, filtering, reduction, and sorting.
+**Learn in three passes:** first call and pass function values; then build a
+small map/filter/sum pipeline; finally handle sorting and ownership. Closures
+and local named helpers build on the first pass. The argument-list reference
+and nested visibility comparison can wait until the main examples are comfortable.
+No knowledge of Lesson 03's optional closure exercise is assumed.
 
 ## Calling a function value
 
-A **sequence** is a proper list or vector; strings are vectors of characters.
-`#'` denotes a function reference, and `lambda` supplies an anonymous function
-as introduced in [Lesson 03](03-functions.md#function-values-versus-local-function-names).
+`#'name` obtains the function named `name`. It does not call that function.
+`funcall` calls a function value with arguments supplied individually:
 
 ```lisp
-(funcall #'+ 2 3)           ; 5
-(apply #'+ '(2 3 4))        ; 9
-(apply #'+ 1 2 '(3 4))      ; 10
+(funcall #'+ 2 3) ; 5
+
+(let ((operation #'+))
+  (funcall operation 2 3)) ; 5
+```
+
+### Function values versus local function names
+
+Common Lisp has separate variable and function namespaces. A variable named
+`operation` is not a function definition named `operation`. Thus
+`(operation 2 3)` would not call the function stored in that variable.
+Use `(funcall operation 2 3)`. `#'name` is shorthand for `(function name)`;
+it obtains a function through its function name, not a variable's value.
+
+`lambda` creates an anonymous function with syntax `(lambda (parameters...) body...)`:
+
+```lisp
+(let ((square (lambda (n) (* n n))))
+  (funcall square 4)) ; 16
+```
+
+There is no need for `eval` or constructing source code to call a function value.
+
+## Transform, filter, and sum — one step at a time
+
+`mapcar` calls a function on each list element and collects the returned values:
+
+```lisp
 (mapcar (lambda (n) (* n n)) '(1 2 3)) ; (1 4 9)
 ```
 
-`funcall` supplies arguments individually. `apply` takes zero or more leading
-arguments and a final list whose elements become trailing arguments. Do not use
-`apply` to pass an unbounded dataset as arguments; implementations have argument
-count limits. Use `reduce` or a loop for large aggregations.
+`remove-if-not` keeps elements for which its predicate returns true. `plusp`
+tests for a positive number. `reduce` combines values with a supplied function:
 
-`mapcar` processes lists and returns a list. `map` handles sequences and takes an
-explicit result type: `(map 'vector #'1+ '(1 2 3))` returns `#(2 3 4)`.
-Mapping several sequences stops at the shortest. `mapc` is for side effects and
-returns its first list argument, not a list of results.
+```lisp
+(remove-if-not #'plusp '(-2 0 3 1)) ; (3 1)
+(reduce #'+ '(9 1) :initial-value 0) ; 10
+(reduce #'+ nil :initial-value 0)    ; 0
+```
 
-`'vector` names the desired result type. `#(2 3 4)` is printed/read notation for
-a vector, not a list or a call; [Lesson 07](07-collections.md) teaches arrays.
-`1+` returns its argument plus one (Lesson 04), so `#'1+` passes that function.
-
-## A small transformation pipeline
+### A small transformation pipeline
 
 ```lisp
 (defun sum-positive-squares (numbers)
+  "Return the sum of squares of positive NUMBERS without changing the input."
   (reduce #'+
           (mapcar (lambda (n) (* n n))
                   (remove-if-not #'plusp numbers))
           :initial-value 0))
+
+(sum-positive-squares '(-2 0 3 1)) ; 10
 ```
 
-This reads as filter, transform, aggregate. It allocates intermediate lists.
-A single `loop` may be clearer or more memory-efficient; neither style is
-automatically superior. `reduce` on an empty sequence without an initial value
-has function-dependent behavior; specify the identity when appropriate.
+Read the inner computation first: filter to `(3 1)`, square to `(9 1)`, then
+sum to 10. `:initial-value 0` makes the empty sum explicit. This is one way to
+express the computation, not a requirement to nest everything:
 
-`remove-if-not` keeps elements for which its predicate is true; `plusp` tests
-for a positive number (Lesson 04). `reduce` combines elements using the supplied
-function; `:initial-value 0` seeds this sum with zero, including on empty input.
-An equivalent loop is `(loop for n in numbers when (plusp n) sum (* n n))`:
-`in` traverses a list and `sum` accumulates a numeric total, defaulting to zero.
+```lisp
+(loop for n in '(-2 0 3 1)
+      when (plusp n)
+        sum (* n n)) ; 10
+```
 
-Useful sequence functions have these roles:
+`in` traverses a list; `sum` accumulates a numeric result, defaulting to zero.
+The pipeline allocates intermediate lists; the loop can avoid them. Choose
+clarity first. Measurement and optimization belong in Lesson 14.
 
-| Names | Meaning |
+## Sequence operations: a lookup menu
+
+A **sequence** is a proper list or vector; strings are vectors of characters.
+Use this table to find an operation, not as a memorization assignment:
+
+| Need | Functions |
 |---|---|
-| `length`, `elt` | Active sequence length; element at a zero-based index |
-| `subseq` | Extract a subsequence between start and optional exclusive end |
-| `find`, `position`, `count` | Find a matching element, its index, or the number of matches |
-| `remove`, `remove-if`, `remove-if-not` | Return a sequence omitting a value, true-predicate elements, or false-predicate elements |
-| `every`, `some` | Test all elements, or seek a true predicate result |
-| `sort`, `stable-sort` | Destructively order a sequence; see the next section |
+| Size or indexed element | `length`, `elt` |
+| Portion of a sequence | `subseq` (start inclusive, end exclusive) |
+| Matching element, index, or number of matches | `find`, `position`, `count` |
+| Omit a value or elements satisfying a predicate | `remove`, `remove-if` |
+| Test all elements or find a true predicate result | `every`, `some` |
 
-Many accept `:key` (a projection applied to elements before comparison), `:test`
-(the equality predicate), or `:start`/`:end` (a half-open traversal interval).
-`evenp` in the example below tests for an even integer. `some` returns the first
-true predicate result, or `nil` if none exists.
+Many operations accept `:key` (extract what to compare) and `:test` (how to
+compare it). For example, compare a name with each pair's first part:
 
 ```lisp
 (find "ada" '(("bob" . 3) ("ada" . 5))
       :key #'car :test #'string=) ; ("ada" . 5)
-(subseq "abcdef" 1 4)            ; "bcd"
-(some #'evenp '(1 3 4))          ; true
+(subseq "abcdef" 1 4)           ; "bcd"
+(some #'evenp '(1 3 4))         ; true
 ```
 
-`find` returns the matching element, so a found `nil` is indistinguishable from
-absence using that value alone. `position` returns an index or `nil`; index 0 is
-true in Lisp. Choose a representation that does not lose necessary information.
+`find` returns an element or `nil`, so it cannot distinguish a found `nil` from
+absence by that value alone. `position` returns an index or `nil`; index 0 is
+true in Lisp. Lesson 07 develops a similar presence issue for hash tables.
 
 ## Sorting and ownership
 
@@ -100,42 +123,170 @@ true in Lisp. Choose a representation that does not lose necessary information.
   (sort (copy-list names) #'string<)) ; ("Ada" "Grace" "Linus")
 ```
 
-`sort` and `stable-sort` may mutate the supplied sequence. Use their return value
-and copy first if you do not own the input. A sorting predicate must describe
-strict precedence, not `<=`. `stable-sort` preserves the relative order of ties.
+`string<` supplies alphabetical ordering; `string=` tests equality. `sort` may
+mutate its sequence, so copy caller-owned input and use the returned value.
+The comparison must mean strict precedence, not `<=`. `stable-sort` additionally
+preserves the relative order of ties.
 
-`string<` compares strings lexicographically and supplies the alphabetical ordering
-used here; `string=` instead tests equality. In the `find` example, `:key #'car`
-compares the sought name with each pair's first part, not with the whole pair.
-For Lab 06, a **projection function** means any function extracting/computing the
-quantity to aggregate, such as `#'cdr` for scores stored in dotted pairs.
+For Lab 06, a **projection function** extracts or computes a quantity to use,
+such as `#'cdr` for the score in `("Ada" . 5)`. `identity` returns its argument
+unchanged, useful when an API expects a projection but no transformation is needed.
 
-`identity` is the function that returns its argument unchanged. The worked
-tests use `#'identity` when an API expects a projection but no transformation
-is desired.
+## Closures: keeping private state
+
+Now return to Lesson 03's guided counter example:
+
+```lisp
+(defun make-counter (&key (start 0))
+  (let ((count start))
+    (lambda () (incf count))))
+
+(let ((next (make-counter :start 10)))
+  (list (funcall next) (funcall next))) ; (11 12)
+```
+
+The `let` runs once when a counter is created; the `lambda` body runs each time
+the returned function is called. The empty `()` means no arguments. The function
+retains access to its lexical `count` binding after `make-counter` returns:
+that is a **closure**. It retains a binding, not a frozen initial value.
+Separate calls to `make-counter` create independent counters. Putting the `let`
+inside `lambda` would initialize a new count on every call instead.
+
+## Local named functions
+
+### `flet`: local named helpers
+
+Use `flet` for a helper that belongs to one computation, not the global API:
+
+```lisp
+(let ((offset 10))
+  (flet ((add-offset (number)
+           (+ number offset)))
+    (list (add-offset 3)
+          (funcall #'add-offset 5)))) ; (13 15)
+```
+
+The syntax is `(flet ((name (parameters...) helper-body...) ...) body...)`.
+The helper entry defines a function; it is not a call and needs no `defun`.
+The outer body can use the function name directly or obtain its function value
+with `#'`. The helper sees the surrounding lexical `offset` binding.
+
+### `labels`: helpers that can call local helpers
+
+Recall Lesson 04's recursive helper: `labels` has the same shape as `flet`, but
+all new function names are visible inside all their definitions too:
+
+```lisp
+(labels ((add-two (number) (add-one (add-one number)))
+         (add-one (number) (+ number 1)))
+  (add-two 5)) ; 7
+```
+
+With `flet`, these new names are visible only in its outer body; references
+inside helper definitions use enclosing or global function bindings instead.
+Definition order does not change either rule. Use `labels` for helpers that call
+one another or themselves; it need not be recursive.
+
+### Later scope practice: a direct comparison
+
+**Optional on the first pass.** Lab 06.7 starts from this comparison:
+
+```lisp
+(flet ((adjust (number) (+ number 100)))
+  (flet ((adjust (number) (+ number 1))
+         (use-adjust (number) (adjust number)))
+    (list (adjust 5) (use-adjust 5)))) ; (6 105)
+
+(flet ((adjust (number) (+ number 100)))
+  (labels ((adjust (number) (+ number 1))
+           (use-adjust (number) (adjust number)))
+    (list (adjust 5) (use-adjust 5)))) ; (6 6)
+```
+
+Both inner bodies call the inner `adjust`. Only `labels` makes that new binding
+visible inside `use-adjust` too. `flet`'s definition sees the enclosing `adjust`.
+This is about function-name visibility, not changing a variable's value.
+
+## More argument-list options
+
+**Reference when needed; not additional Lab 06 requirements.** `&optional`
+provides positional defaults; `&rest` collects remaining arguments into a list:
+
+```lisp
+(defun supplied-demo (&optional (value 10 supplied-p))
+  (list value supplied-p))
+
+(supplied-demo)     ; (10 NIL)
+(supplied-demo nil) ; (NIL T)
+
+(defun collect-items (&rest items)
+  items)
+
+(collect-items 1 2 3) ; (1 2 3)
+```
+
+The optional supplied-p parameter distinguishes omission from an explicit value.
+Avoid mixing `&optional` and `&key` in beginner APIs: positional consumption can
+be surprising. Do not mutate quoted list defaults.
+
+`apply` calls a function using a final list of arguments:
+
+```lisp
+(apply #'+ '(2 3 4))   ; 9
+(apply #'+ 1 2 '(3 4)) ; 10
+```
+
+Do not pass an unbounded dataset as arguments: implementations have argument-count
+limits. Use a loop or `reduce` for large aggregations. Other mapping variants
+(`map`, `mapc`, mapping multiple lists) can wait until an actual task needs them;
+their contracts are in the HyperSpec.
 
 ## Lab 06 — Data pipeline
 
+Complete exercises 1–2 before combining filtering and sorting. Then take 3–4.
+Exercise 5 revisits Lab 03's guided closure work with the necessary background
+now taught. Exercises 6–7 practise local functions; they are not needed to
+implement this lesson's collection APIs.
+
 ### Exercises
 
-1. Write `positive-squares`, preserving input order and leaving the input unchanged.
+1. Write `positive-squares`, preserving input order and leaving input unchanged.
 2. Write `total-by` taking a projection function and a list, returning the sum
-   of projected values. Return 0 for an empty list.
-3. Sort an alist of string names and scores by descending score, with ascending
-   string names for ties, without mutating the input.
-4. Write both a pipeline and a one-pass loop for positive-square totals; test
-   equivalent behavior before discussing allocation.
+   of projected values. Return 0 for an empty list. Call the projection with
+   `funcall`; test `#'cdr` on an alist and `#'identity` on plain numbers.
+3. Write `sorted-scores`: sort an alist of string names and scores by descending
+   score, with ascending string names for ties, without mutating the input.
+4. Write both a pipeline and a one-pass loop for positive-square totals; check
+   equivalent behavior. No benchmark or allocation measurement is required yet.
+5. Complete or revisit Lab 03.5: `make-stepper` has keyword `start` and `step`,
+   returns a private stateful function, and separate steppers advance independently.
+   Use start 10 and step 3 to obtain 13 then 16 from successive calls.
+6. **Local-function practice:** bind `offset` to 20 with `let` and define
+   `add-offset` with `flet`. Return a list of `(add-offset 2)` and
+   `(funcall #'add-offset 5)`, expecting `(22 25)`. Inside the `flet`, separately
+   bind `helper` to `#'add-offset` and evaluate `(funcall helper 5)`, expecting 25.
+   Explain function-name lookup versus a variable containing a function;
+   `(helper 5)` would not call that variable's value. Neither call changes `offset`.
+7. **Local-function practice:** work through the `flet`/`labels` visibility
+   comparison above. Then define local `triple` and `triple-plus-one` helpers
+   with `labels`; the latter calls the former. A call with 4 returns 13.
 
 ### Acceptance checklist
 
-- [ ] Exercise 1: `(-2 0 3 1)` produces `(9 1)` in that order without mutation.
-- [ ] Exercise 2: projected values are summed correctly; an empty input returns 0.
+- [ ] Exercise 1: `(-2 0 3 1)` produces `(9 1)` in order without mutation.
+- [ ] Exercise 2: projected values sum correctly; empty input returns 0.
 - [ ] Exercise 3: scores sort descending, names break ties ascending, and the
-  caller's original list order remains intact.
+  caller's original order remains intact.
 - [ ] Exercise 4: the pipeline and one-pass loop return equivalent totals.
+- [ ] Exercise 5: one stepper returns 13 then 16 for start 10, step 3; advancing
+  it does not advance a second stepper. Explain when the counter is initialized.
+- [ ] Exercise 6: both calls return `(22 25)`, `(funcall helper 5)` returns 25,
+  and you explain why `(helper 5)` is a different, undefined function call.
+- [ ] Exercise 7: you explain both comparison results, `(6 105)` and `(6 6)`, and
+  the `labels` helpers return 13 for 4.
 
 ### Review questions
 
-1. Why is `#'` clearer than quote when referring to a function?
-2. How does `apply` differ from passing one list argument?
+1. How do obtaining a function with `#'` and calling it with `funcall` differ?
+2. When should a helper use `labels` rather than `flet`?
 3. Does functional-looking code guarantee that no mutation occurs?

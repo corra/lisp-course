@@ -31,7 +31,8 @@ A sufficient file is:
 (nickname)
 ```
 
-Load it, run it with `--script`, and compile/load it as in Lesson 00. A REPL
+Load it and run it with `--script`. The compile/load recipe is a follow-up in
+Lesson 09, not required on your first session. A REPL
 explicitly prints returned values; a script evaluates forms but prints only
 explicit output. A function can both print something and return an unrelated
 value. `format` with destination `t` normally returns `nil`.
@@ -85,15 +86,22 @@ integer with exact ties to even. Thus `(round 5 2)` returns `2, 1`, while
 `(round 7 2)` returns `4, -1`. A negative remainder is not itself an error; it
 is the amount needed to reconstruct the original number from the chosen quotient.
 
-`'()` and `nil` are the same false/empty-list object. An empty string is true.
-Integer cents avoid binary rounding for whole-cent amounts, although division,
-tax, rounding, and multiple currencies still need domain rules.
+`'()` and `nil` are the same false/empty-list object. Zero and the empty string
+are both true. `1/3` is an exact rational; a float such as `0.333d0` only
+approximates it. Numbers, strings, and lists need different equality tests
+because each answers a different question: numeric value, character contents,
+or element-by-element structure. Two returned values are separate results that
+an ordinary argument position reduces to the first; a two-element list is one
+object holding both.
 
 ## 03 — Functions and scope
 
+Core exercises are 1–4. Extension 5, the closure exercise, is revisited as
+Lab 06.5. These answers are not an additional first-pass reading list.
+
 See `price-with-tax` and `make-stepper` in the executable answers.
 
-For Lab 03.4, both inner forms evaluate their initializer expressions from left
+For Lab 03.2, both inner forms evaluate their initializer expressions from left
 to right. What changes is when the new bindings become visible:
 
 | Step | Inner `let` | Inner `let*` |
@@ -114,46 +122,21 @@ changes what a place holds. Mutating a cons or string changes an object that
 other references may share. A closure retains lexical bindings, not a frozen
 copy of every value. `defvar` intentionally preserves an already-bound value.
 
-For Lab 03.5, `price-with-tax` and `make-stepper` already use conventional
+For Lab 03.4, `price-with-tax` (and later `make-stepper`) use conventional
 hyphenated function names. Parameters such as `rate`, `start`, and `step`, and
 the closure's private counter, are ordinary lexical bindings: do not give them
 special-variable earmuffs or constant decorations. Explain exceptions using the
 [style guide](STYLE.md), rather than renaming the required API.
 
-For Lab 03.6, both calls use the same local function binding:
+For Lab 03.3, `area` is freshly bound for each estimate. The top-level
+setting is shared: after setting it to 3, repeating `defvar` preserves 3 and
+the 3-by-4 estimate is 36. `defparameter` resets it to 2, giving 24. A temporary
+price of 5 gives 60 within the `let`, then the estimate is 24 again outside it.
 
-```lisp
-(let ((offset 20))
-  (flet ((add-offset (number) (+ number offset)))
-    (list (add-offset 2) (funcall #'add-offset 5)))) ; (22 25)
-```
+### Optional dynamic-scope practice
 
-`add-offset` is a function name, whereas a function stored in a variable must be
-called through `funcall`. `#'add-offset` obtains the locally named function object.
-
-The additional check belongs inside the `flet` body, where `add-offset` is visible:
-
-```lisp
-(let ((offset 20))
-  (flet ((add-offset (number) (+ number offset)))
-    (let ((helper #'add-offset))
-      (funcall helper 5)))) ; 25
-```
-
-`(helper 5)` would look for a function named `helper`, not read the variable's
-value. `funcall` calls that value. Neither check changes the `offset` binding.
-
-For Lab 03.7, the nested `flet` example returns `(6 105)` because `use-adjust`
-sees the enclosing `adjust`; the `labels` version returns `(6 6)` because its
-helper definitions see the new local names. Definition order does not change this.
-
-```lisp
-(labels ((triple (number) (* 3 number))
-         (triple-plus-one (number) (+ (triple number) 1)))
-  (triple-plus-one 4)) ; 13
-```
-
-For Lab 03.8, global describes the top-level binding; special describes dynamic
+For the [dynamic-scope reference](optional/DYNAMIC-SCOPE.md#optional-practice)
+exercises, global describes the top-level binding; special describes dynamic
 binding and lookup. `let` temporarily rebinds a special variable; assignment
 inside it changes that temporary binding, not the global one. The previous
 binding is restored on leaving the body. `defvar` preserves an existing value,
@@ -170,7 +153,7 @@ proclaims its name special.
 ## 04 — Control
 
 The executable answers show iterative factorial, sum of squares, and `safe-mean`.
-An especially straightforward factorial alternative is:
+The factorial initializes its accumulator to 1:
 
 ```lisp
 (defun factorial-iter (n)
@@ -180,8 +163,9 @@ An especially straightforward factorial alternative is:
       (setf result (* result (1+ i))))))
 ```
 
-For empty input `safe-mean` returns `(values nil nil)`. For nonempty input it
-returns `(values (/ total count) t)`, preserving exact ratios when possible.
+`safe-mean` keeps local `count` and `total` accumulators in one `dolist`. For
+empty input it returns `(values nil nil)`. For nonempty input it returns
+`(values (/ total count) t)`, preserving exact ratios when possible.
 For Lab 04.1, an accumulator initially equal to 1 gives the correct factorial
 of zero even when the loop body never runs. Lab 04.2 similarly uses an initial
 total of 0 for an empty sum; reject negative and non-integer `n` with
@@ -191,13 +175,19 @@ total of 0 for an empty sum; reject negative and non-integer `n` with
 Tail-call optimization is not a language guarantee; large linear traversals
 should not depend on it.
 
-The loop-exit example returns `:after-loop` because leaving the loop does not
-skip subsequent function-body forms. `return-from function-exit-demo` instead
-leaves the function's named block and returns -2 immediately. Ordinary completion
-needs neither early-exit form. `(1- n)` computes a new argument without changing
-the caller's binding; `(incf n -1)` assigns a decremented value to that binding.
+In `first-negative`, `return` leaves only the `dolist`. The function returns that
+value because the loop is its last form; a form after the loop would still run.
+`(return-from first-negative n)` would instead leave the whole function at once.
+Ordinary completion needs neither early-exit form. `if` returns the selected
+branch's values; `when` returns its last body form's values, or `nil` when the
+test is false. Choose `when` for one-sided work with several body forms.
 
-For Lab 04.5, a local recursive implementation is:
+`dotimes`, `dolist`, and `loop for` create the loop variable's binding; `incf` and
+`setf` update an accumulator created outside the loop. Factorial stops at the
+`zerop` base case. `(1- n)` computes a new argument without changing the
+caller's binding: each call has its own `n`.
+
+For the guided second-pass Lab 04.5, a local recursive implementation is:
 
 ```lisp
 (defun sum-to-local (n)
@@ -241,10 +231,16 @@ working on one implementation does not make it valid.
 
 ## 06 — Sequence processing
 
-The executable answers implement each requested transformation, including a
-two-part strict sorting predicate: descending score, then ascending name for ties.
+The executable answers implement each requested transformation. `total-by` calls
+its projection with `funcall` and is tested with `#'cdr` and `#'identity`.
+`sorted-scores` uses a two-part strict sorting predicate: descending score, then
+ascending name for ties.
 They copy the list spine before sorting. This suffices because sorting rearranges
 outer cells rather than modifying the pair objects or their name strings.
+The no-mutation test needs a more independent snapshot: it copies each pair and
+each name string before the call, then checks both the full returned records
+and the unchanged input. Copying only the outer list would conceal changes to
+the shared scores or names.
 
 `#'` denotes the function namespace and can refer to lexical functions. Quote
 produces a symbol, which some APIs also accept as a global function designator,
@@ -252,11 +248,45 @@ but it is not the same operation. `apply` spreads its last list; `funcall` with
 a list argument passes that list as one value. A called function may mutate data
 even when the surrounding code looks like a functional pipeline.
 
+For Lab 06.6, both calls use the same local function binding:
+
+```lisp
+(let ((offset 20))
+  (flet ((add-offset (number) (+ number offset)))
+    (list (add-offset 2) (funcall #'add-offset 5)))) ; (22 25)
+```
+
+`add-offset` is a function name, whereas a function stored in a variable must be
+called through `funcall`. `#'add-offset` obtains the locally named function object.
+
+The additional check belongs inside the `flet` body, where `add-offset` is visible:
+
+```lisp
+(let ((offset 20))
+  (flet ((add-offset (number) (+ number offset)))
+    (let ((helper #'add-offset))
+      (funcall helper 5)))) ; 25
+```
+
+`(helper 5)` would look for a function named `helper`, not read the variable's
+value. `funcall` calls that value. Neither check changes the `offset` binding.
+
+For Lab 06.7, the nested `flet` example returns `(6 105)` because `use-adjust`
+sees the enclosing `adjust`; the `labels` version returns `(6 6)` because its
+helper definitions see the new local names. Definition order does not change this.
+
+```lisp
+(labels ((triple (number) (* 3 number))
+         (triple-plus-one (number) (+ (triple number) 1)))
+  (triple-plus-one 4)) ; 13
+```
+
 ## 07 — Collections
 
 `frequencies`, `lookup-or-error`, and `square-buffer` are executable answers.
-`lookup-or-error` uses both `gethash` values and signals a dedicated `missing-key`
-condition; a stored `nil` is returned normally.
+`lookup-or-error` uses both `gethash` values: a stored `nil` is returned normally,
+and absence signals `(error "Missing key: ~S" key)`. Lesson 11 shows how a
+dedicated condition type would let callers handle this failure specifically.
 
 A small alist is easy to inspect and preserves a deliberate list order. A hash
 table is appropriate for many lookups; sort separately for presentation. A vector
@@ -265,12 +295,13 @@ A fill pointer counts active entries, while capacity describes storage space.
 
 ## 08 — I/O
 
-`count-stream-lines` factors the loop away from opening a file. Tests use string
+`count-lines-in` factors the loop away from opening a file. Tests use string
 streams for empty input, one empty line, and an unterminated final line. The file
 wrapper uses `with-open-file` to close the resource.
 
 `parse-positive-integer` uses strict `parse-integer` then checks positivity.
-`"3x"` signals a parsing error; `"0"` and `"-1"` fail the value constraint. Leading
+`"3x"` signals a parsing error; `"0"` and `"-1"` fail the value constraint and
+signal `(error "Expected a positive integer")`, as the lesson suggests. Leading
 and trailing whitespace are accepted by this policy.
 
 For milestone 2, a useful tokenizer design walks character positions, remembers

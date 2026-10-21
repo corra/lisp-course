@@ -12,6 +12,10 @@ the lesson references tell you when that is. This is a reference, not an extra
 prerequisite or an invitation to use advanced constructs before understanding them.
 Do not rename the specified lab APIs just to demonstrate a preference.
 
+For a first pass through Lessons 00–04, use only the naming and layout advice
+relevant to your examples. The detailed API, ownership, package, and declaration
+sections become useful later; they are not an additional foundations syllabus.
+
 No editor, formatter, linter, or structural-editing extension is required.
 Plain-text source and the documented terminal test commands remain the baseline.
 

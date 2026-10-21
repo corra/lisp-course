@@ -11,6 +11,12 @@ Lisp; examples from those languages are not necessarily interchangeable.
 2. Complete [Lesson 00: environment and workflow](lessons/00-environment.md).
 3. Work through the lessons in order, attempting exercises before solutions.
 
+Follow the [core learning path](COURSE.md#core-path-versus-reference-material).
+Sections marked optional reference or later practice are not prerequisites for
+the current lab. In particular, explicit special declarations are not part of
+your first functions lesson; closures are revisited when functions-as-values
+are taught in Lesson 06.
+
 The [example-reading conventions](COURSE.md#how-examples-introduce-names-and-notation)
 distinguish required concepts, previews, placeholders, and application-defined
 names. Use the [construct index](REFERENCE.md#where-constructs-are-taught) to find
@@ -27,7 +33,7 @@ baseline. Their installation may require network access.
 
 - [Course guide and assessment](COURSE.md)
 - [Common Lisp style guide](STYLE.md): naming, layout, APIs, ownership, and review
-- [00 — Linux setup and reproducible workflow](lessons/00-environment.md)
+- [00 — Starter terminology, Linux setup, and reproducible workflow](lessons/00-environment.md)
 - [01 — Reading and evaluating Lisp](lessons/01-evaluation.md)
 - [02 — Values, numbers, symbols, and equality](lessons/02-values.md)
 - [03 — Functions, bindings, and scope](lessons/03-functions.md)
@@ -48,6 +54,9 @@ baseline. Their installation may require network access.
 
 ### Optional environment and ecosystem modules
 
+- [Numeric details](optional/NUMBERS.md): rounding policies and less common numeric forms.
+- [Dynamic scope and special declarations](optional/DYNAMIC-SCOPE.md): a reference
+  after Lesson 08, not required before learning local variables and functions.
 - [Practical tools and configuration](optional/TOOLING.md): Git, `rlwrap`, local
   documentation, development settings, `.gitignore`, and continuous integration.
 - [Quicklisp, Alexandria, and FiveAM](optional/QUICKLISP.md): explicit setup,
@@ -111,7 +120,7 @@ commands assume this directory is the working directory.
 
 The full reference suite was checked on Linux with **SBCL 2.6.9**, with site and
 user initialization disabled. It covers language examples, exercise solutions,
-capstone behavior and malformed files, plus 18 CLI subprocess scenarios. CLI
+capstone behavior and malformed files, plus 19 CLI subprocess scenarios. CLI
 tests execute from a different working directory. You can select a different
 SBCL binary for subprocess tests using the `COURSE_SBCL` environment variable.
 
@@ -119,3 +128,13 @@ The separate optional example was also checked with Alexandria 1.0.1 and FiveAM
 1.4.3 from Quicklisp distribution `2026-01-01`: all 11 checks passed. These are
 tested versions, not a dependency lock or a promise about future releases.
 The hosted GitHub Actions job must be run on GitHub to validate that environment.
+It installs Ubuntu's packaged SBCL, which is usually several releases older than
+2.6.9. The course relies on longstanding features, and the job prints the version
+it used; a pass there checks that older release, not 2.6.9.
+
+See [the independent review record](REVIEW.md) for the 2026-10-20 findings,
+their fixes, and additional regression checks.
+
+## License
+
+The course text and source code are available under the [MIT License](LICENSE).

@@ -18,6 +18,12 @@ From [Lesson 12](12-objects.md):
 This lesson uses those foundations
 to transform source forms while preserving deliberate evaluation and binding rules.
 
+**Focus on one small macro:** inspect an expansion, find repeated evaluation,
+then introduce a fresh temporary variable. Those steps are enough for the lab.
+The `eval` discussion and compile-time availability section are references for
+specific questions, not extra techniques to use in every macro. No macro is
+required in the capstone merely to demonstrate that you know how to write one.
+
 ## A macro receives forms, not their run-time values
 
 `defmacro` has a name, a parameter list, and an expander body. Unlike `defun`, its
@@ -39,23 +45,32 @@ constructing that template. Comma-at splices the elements of a list into it.
 This happens in the macro expander, not as arbitrary evaluation of user source.
 
 The expansion is ordinary Lisp code. The compiler compiles it or the evaluator
-evaluates it. `macroexpand-1` performs one outer expansion and also returns an
-expanded-p value; it does not recursively expand every nested form.
+evaluates it. `macroexpand-1` performs one outer expansion and also returns a
+second value, true when it performed an expansion; it does not recursively
+expand every nested form.
 
 In the template, `,expression` inserts the source form held by the expander's
 parameter; `,@body` inserts the list's individual forms, not one nested list.
 These comma notations apply inside backquote. The expansion's generated
-`when` follows the ordinary control rules taught in Lesson 04. The second
-`macroexpand-1` value is true when it performed an expansion.
+`when` follows the ordinary control rules taught in Lesson 04.
 
 Use a function whenever ordinary evaluated arguments suffice. A macro is
 justified for new binding, control, resource, or syntactic conventions—not merely
 to avoid typing a short function call.
 
+**Redefining a macro does not update compiled callers.** A call site is
+expanded when its function is compiled, and SBCL compiles definitions as they
+are loaded. If you change a macro, functions defined earlier still run the old
+expansion until you reload or recompile them. After editing a macro, reload the
+files that use it, or restart SBCL and load everything in order. Ordinary,
+non-inlined global function calls use the new definition without recompiling
+their callers. Inlined callers can retain the old code and need recompilation.
+
 ## Evaluation is not macro expansion
 
-Lesson 01 previewed `eval`: it takes a Lisp object and evaluates that object as
-a form. It does not merely inspect or expand it.
+**Reference; skip to the repeated-evaluation trap on a first pass.** `eval`
+takes a Lisp object and evaluates that object as a form. It does not merely
+inspect or expand it. Earlier lessons deliberately did not require using it.
 
 ```lisp
 (list '+ 2 3)         ; constructs the data (+ 2 3)
@@ -99,12 +114,12 @@ This macro is wrong for a once-only contract:
 ```
 
 `(bad-twice (incf n))` increments twice. The expansion duplicates the form.
-A better macro uses a fresh temporary symbol:
+A better macro evaluates the expression once, into a variable with a fresh name.
 
 `gensym`, introduced as an EOF-marker constructor in [Lesson 08](08-io.md),
 also creates variable names that cannot accidentally equal a caller's interned
-symbol. Here the local expander variable `value` holds that fresh symbol; comma
-inserts the symbol into the generated binding and references.
+symbol. Below, the local expander variable `value` holds that fresh symbol; comma
+inserts the symbol into the generated binding and references:
 
 ```lisp
 (defmacro twice (expression)
@@ -143,6 +158,9 @@ The standard macro already exists; wrapping it is useful only if your applicatio
 adds a real convention.
 
 ## Compile-time availability
+
+**Later reference, not part of Lab 13.** First keep definitions before consumers;
+study phase-control forms only when a compile-time helper actually needs them.
 
 Put macro definitions before consumers, normally in an earlier ASDF component.
 If a macro's expander calls a helper during compilation, that helper must also be

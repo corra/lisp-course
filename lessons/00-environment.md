@@ -1,7 +1,7 @@
 # 00 — Terminology, Linux setup, and an editor-independent workflow
 
-**Goals:** recognize basic course terminology, install SBCL, distinguish shell from REPL, run and compile a source
-file, and recover from errors without a particular editor. **Time:** 2–4 hours.
+**Goals:** install SBCL, distinguish shell from REPL, run a saved source file,
+and recover from an error. **Time:** 2–4 hours.
 
 ## Prerequisite recap
 
@@ -20,6 +20,11 @@ This lesson introduces the vocabulary and baseline toolchain: installation, shel
 REPL, loading and reloading source, scripts, compilation, and basic error recovery.
 Return to the relevant section when a later lab needs one of these operations.
 No prior SBCL debugger experience is assumed.
+
+**First-session path:** install, start the REPL, edit/load the greeting, run it
+as a script, and practice returning from one deliberate error. That is enough
+to start Lesson 01. Compilation is a follow-up recipe to revisit in Lesson 09;
+editor integrations and configuration files are not prerequisites.
 
 Later lessons explain small new tool operations inline before requiring them.
 [Lesson 10](10-testing.md) expands the guide with function-call tracing and
@@ -43,18 +48,14 @@ Later lessons develop the language concepts with examples.
 | Form / expression | Lisp code considered for evaluation, such as `42` or `(+ 20 22)`. Parenthesized forms can be calls or other language constructs; not every list is a function call. |
 | Evaluate / return / print | Evaluate means compute according to the language's rules. Returning supplies values to a caller; printing writes text to an output destination. These are separate actions. |
 | Function / call / body | A function is a callable computation; a call invokes it. Its body is the code executed when it is called. |
-| Parameter / argument | A parameter is a name in a function definition; an argument is a value supplied by a call. |
-| Variable / binding / scope | A variable is a name used to access a value. A binding associates that name with a value; scope determines where references use that binding. Lesson 03 develops this distinction. |
-| Initializer / assignment | An initializer computes a binding's initial value. Assignment changes an existing place, such as a variable's value. |
 | Definition / load | A definition establishes something such as a named function. Loading reads and evaluates a file's forms; it does not necessarily call every function defined there. |
 | Session / image state | A running Lisp retains definitions and other state. A fresh process starts a new session rather than inheriting your earlier REPL experiments. |
 | Error / debugger / restart | An error reports a problem; an interactive debugger lets you investigate it. An offered restart is a particular recovery action, not necessarily restarting SBCL. |
-| Walkthrough / call trace / backtrace | A walkthrough follows evaluation by hand. A call trace reports function calls and returns while running. A backtrace shows the active call stack at a point in execution. They are not interchangeable. |
 
-Use this as a reference, not a memorization test. Lesson 01 explains forms and
-evaluation, Lesson 03 explains bindings and scope, and Lesson 10 introduces
-tool-assisted tracing and debugging. New specialist terminology should still be
-explained where it is first needed.
+Use this as a lookup reference, not a memorization test before installing SBCL.
+Learn variable/binding/scope terminology with the examples in Lesson 03, and
+call traces/backtraces when needed in Lesson 10. A request to “trace by hand”
+simply means write down the evaluation steps; it does not require those tools.
 
 ## 1. Install the essentials
 
@@ -194,7 +195,7 @@ Unlike the REPL, a script does not automatically print each form's return values
 Only explicit output is displayed. A file of function definitions can load
 successfully without printing anything.
 
-Compile and then load a file interactively:
+**Follow-up, not required on the first session:** compile and load a file:
 
 ```lisp
 (compile-file "work/hello.lisp")
@@ -253,7 +254,7 @@ explains conditions and restarts. You only need the recovery procedure here.
 
 1. Create a function that prints your chosen course nickname.
 2. Run it using `load`, then `--script`, without an editor plugin.
-3. Compile the source file and load its FASL.
+3. **Follow-up in Lesson 09:** compile the source file and load its FASL.
 4. Deliberately cause an error and return to the REPL without terminating SBCL.
 5. Record the SBCL version and exact commands you used.
 
@@ -262,7 +263,8 @@ explains conditions and restarts. You only need the recovery procedure here.
 - [ ] Exercise 1: the function prints your chosen nickname.
 - [ ] Exercise 2: the greeting runs in a fresh process using either workflow;
   you can distinguish shell commands from REPL forms.
-- [ ] Exercise 3: the compiled file loads successfully.
+- [ ] Follow-up 3: the compiled file loads successfully; defer until Lesson 09
+  if loading source and editing it are still new.
 - [ ] Exercise 4: you recover to the top-level REPL and can evaluate another form.
 - [ ] Exercise 5: your notes contain the version and reproducible commands.
 

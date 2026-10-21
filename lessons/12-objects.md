@@ -17,12 +17,17 @@ From [Lesson 11](11-conditions.md):
 The named fields and readers provide a first encounter with object-like APIs.
 This lesson develops records, classes, accessors, and generic behavior explicitly.
 
+**Build in stages:** construct/read/update a structure first. Then render one
+class through a generic function. Add a subclass only after those calls work.
+Multiple dispatch is a follow-up example; advanced method combination and slot
+type declarations are not prerequisites for the lab.
+
 ## Start with a structure
 
 ```lisp
 (defstruct reading
-  (sensor "unknown" :type string)
-  (value 0 :type real))
+  (sensor "unknown")
+  (value 0))
 
 (let ((r (make-reading :sensor "room" :value 21)))
   (incf (reading-value r))
@@ -31,16 +36,23 @@ This lesson develops records, classes, accessors, and generic behavior explicitl
 
 `defstruct` creates a constructor, predicate, accessors, and copier by default.
 The copier is shallow. Structures suit compact records with a mostly fixed shape.
-Slot type declarations communicate assumptions; do not treat them as a complete
-user-input validation strategy across implementations and optimization settings.
+Start with plain slot defaults; validate public inputs with ordinary code.
 
 For this definition the generated names are `make-reading` (constructor),
 `reading-p` (predicate), `reading-sensor`/`reading-value` (accessors), and
 `copy-reading` (shallow copier). The example calls those generated functions;
 you do not need to find separate `defun` definitions for them. Each slot form is
-`(name default-value :type type-specifier)`. `string` and `real` are type names;
-`real` covers rational and floating-point real numbers, not objects of type
-`complex`. The `:sensor`/`:value` construction keywords select slot values.
+`(name default-value)`. The `:sensor`/`:value` construction keywords select values.
+Optional slot `:type` declarations can wait for Lesson 14; they communicate
+assumptions, not a complete public-input validation strategy.
+
+**Reloading a changed structure.** If you add or remove a slot and reload the
+file, SBCL warns about a "change in instance length" and stops in the debugger:
+it cannot silently update instances and accessors already compiled for the old
+shape. The `CONTINUE` restart uses the new definition and invalidates old code
+and instances; avoid `RECKLESSLY-CONTINUE` while learning. After continuing,
+reload every file that uses the structure, or simply restart SBCL and load the
+source fresh. Classes from `defclass` can be redefined more gracefully.
 
 These defaults demonstrate the constructor/type-accessor conventions from
 [Lesson 03](03-functions.md#naming-conventions). Keep them unless an API has a
@@ -93,6 +105,9 @@ the class definitions, not built-ins. `slot-value` takes an object and a slot-na
 symbol when explicit slot access is needed, rather than a generated accessor.
 
 ## Dispatch is not limited to one receiver
+
+**Follow-up after your first rendering method works.** The lab only needs a
+single object argument; there is no requirement to build multiple-dispatch APIs.
 
 ```lisp
 (defgeneric combine-labels (left right))

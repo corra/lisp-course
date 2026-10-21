@@ -17,6 +17,11 @@ From [Lesson 04](04-control.md):
 You have already traversed lists. Now you will inspect their cons-cell structure
 to understand sharing, copying, and the effects of mutation.
 
+**Core path:** construct/read lists, observe shared tails, copy before changing
+caller-owned data, and build a list with `push`/`nreverse`. Complete Lab 05 with
+those tools. Alists/plists are useful lookup examples; tree recursion and
+destructuring are a second pass, not additional barriers to starting Lesson 06.
+
 ## Lists are linked structures
 
 A **cons cell** contains two references, its `car` and its `cdr`. A proper list
@@ -57,11 +62,15 @@ Use traversal or choose a vector for frequent random access.
   (list a b))               ; ((1 99 3) (0 99 3))
 ```
 
-`a` and `b` share tail cells; neither assignment copied them. Rebinding `tail`
-would change the variable, not those existing cells. `copy-list` copies only the
-outer spine; nested elements remain shared. `copy-tree` recursively copies cons
-structure, not arbitrary arrays or objects, and is not a general cyclic graph
-copier.
+`let*` creates bindings for `tail`, `a`, and `b`. Each `cons` creates one new
+head cell whose `cdr` refers to the same existing tail; it does not copy that tail.
+`(setf (first tail) 99)` mutates a shared cell, so both lists show the change.
+By contrast, assigning another list to `tail` with `setf` would update that
+variable's binding without changing the cells already referenced by `a` and `b`.
+An inner `let` named `tail` would create a separate shadowing binding, not assign
+to the outer one. `copy-list` copies only the outer spine; nested elements remain
+shared. `copy-tree` recursively copies cons structure, not arbitrary arrays or
+objects, and is not a general cyclic graph copier.
 
 ## Mutation rules
 
@@ -112,14 +121,17 @@ Clearly document whether a function owns, copies, or may mutate its input.
 
 An **alist** is a list of key/value pairs; a **plist** alternates indicators and
 values. Both are convenient for small records and options, but lookup is linear.
-Supply an appropriate `:test`, e.g. `#'equal`, when alist keys are strings.
+The keyword keys in this example work with the default comparison. For string
+keys use an appropriate equality test; function-valued options such as
+`:test #'equal` are taught in Lesson 06, not assumed here.
 
 `assoc` returns the matching pair, or `nil`, which is why `cdr` then extracts
-its value. `getf` returns the matching property's value instead. `:test` supplies
-the equality function to use, e.g. `(assoc "Ada" entries :test #'equal)`.
-`entries` in this fragment stands for your alist, not a built-in variable.
+its value. `getf` returns the matching property's value instead.
 
 ## Trees and structural recursion
+
+**Second pass after the lab.** This reuses recursion from Lesson 04; it is not
+needed for this lesson's counting and copy exercises.
 
 Nested cons structure is naturally recursive. Distinguish the empty list, a leaf
 that is not a cons, and a branching cons:

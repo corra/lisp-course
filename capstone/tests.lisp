@@ -23,10 +23,10 @@
         (store (course-tasks:make-store)))
     (check (null (course-tasks:all-tasks store)))
     (let* ((title (copy-seq "Read"))
-           (first (course-tasks:add-task store title)))
-      (check (= 1 (course-tasks:task-id first)))
+           (added (course-tasks:add-task store title)))
+      (check (= 1 (course-tasks:task-id added)))
       (setf (char title 0) #\X)
-      (setf (char (course-tasks:task-title first) 0) #\Y)
+      (setf (char (course-tasks:task-title added) 0) #\Y)
       (check (string= "Read" (course-tasks:task-title
                               (first (course-tasks:all-tasks store))))))
     (course-tasks:add-task store "Practice")
@@ -37,7 +37,7 @@
     (check (course-tasks:task-done-p (first (course-tasks:all-tasks store))))
     (check (not (course-tasks:task-done-p (second (course-tasks:all-tasks store)))))
     (check (signals course-tasks:missing-task (course-tasks:complete-task store 99)))
-    (dolist (title (list "" "   " (string #\Tab) 42 nil))
+    (dolist (title (list "" "   " (string #\Tab) (format nil "two~%lines") 42 nil))
       (check (signals course-tasks:bad-data (course-tasks:add-task store title))))
     (dolist (id '(0 -1 "1" 1.5))
       (check (signals course-tasks:bad-data (course-tasks:complete-task store id))))
@@ -55,6 +55,13 @@
         (check (string= "Practice" (course-tasks:task-title
                                     (second (course-tasks:all-tasks loaded)))))
         (check (= 3 (course-tasks:task-id (course-tasks:add-task loaded "Next")))))
+      ;; Base-string titles (as SBCL supplies command-line arguments) must still
+      ;; be saved in the documented plain-string format.
+      (let ((base-store (course-tasks:make-store)))
+        (course-tasks:add-task base-store (coerce "Base" 'base-string))
+        (course-tasks:save-store base-store path)
+        (check (search "(1 \"Base\" NIL)" (uiop:read-file-string path))))
+      (check-bad-file path (format nil "(:version 1 :next-id 2 :tasks ((1 \"A~%B\" nil)))"))
       (dolist (text '("" "(" "nil" "(:version 2 :next-id 1 :tasks nil)"
                       "(:version 1 :next-id 1 :tasks ((1 \"A\" nil)))"
                       "(:version 1 :next-id 3 :tasks ((1 \"A\" nil) (1 \"B\" t)))"
@@ -66,6 +73,10 @@
                       "(:version 1 :next-id 1 :tasks (a . b))"
                       "(:version 1 :next-id 1 :tasks #1=(nil . #1#))"))
         (check-bad-file path text))
+      ;; Symbols in a data file go to the isolated reader package.
+      (check-bad-file path "(:version 1 :next-id 1 :tasks stray-data-symbol)")
+      (check (null (find-symbol "STRAY-DATA-SYMBOL" :course-tasks)))
+      (check (find-symbol "STRAY-DATA-SYMBOL" :course-tasks.data))
       (course-tasks:save-store (course-tasks:make-store) path)
       (check (null (course-tasks:all-tasks (course-tasks:load-store path))))
       (delete-file path)
