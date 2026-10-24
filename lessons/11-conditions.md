@@ -148,6 +148,34 @@ result means success. It obscures both expected user mistakes and unexpected
 programming bugs. Handle specific conditions where you have a policy; report
 unexpected errors clearly at a CLI boundary and exit unsuccessfully.
 
+## Follow-up reference: choosing a branch by type
+
+**Optional; not needed for Lab 11.** When input can arrive as several kinds of
+value, `etypecase` selects the first clause whose type the value belongs to:
+
+```lisp
+(defun describe-score-input (value)
+  "Classify VALUE before validation; signal a TYPE-ERROR for other types."
+  (etypecase value
+    ((integer 0 100) :valid-score)
+    (integer :out-of-range)
+    (string :needs-parsing)))
+
+(describe-score-input 50)   ; :VALID-SCORE
+(describe-score-input 150)  ; :OUT-OF-RANGE
+(describe-score-input "85") ; :NEEDS-PARSING
+```
+
+The shape is `(etypecase key-form (type body-form...) ...)`. Each clause type
+is unquoted type syntax, as in `check-type`, not a value to compare with `eql`
+as in Lesson 04's `case`. Clauses are tried in order, so put the narrower
+`(integer 0 100)` before plain `integer`; reversing them would make the first
+clause unreachable. If no clause matches, as for `(describe-score-input 8.5)`,
+`etypecase` signals a `type-error` that a `handler-case` clause can handle.
+`typecase` has the same shape but returns `nil` when nothing matches, and accepts
+a final `otherwise` clause. Prefer `etypecase` when an unexpected type is a bug:
+returning `nil` silently is the failure-erasing pattern described above.
+
 ## Lab 11 — Resilient input
 
 ### Exercises

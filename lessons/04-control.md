@@ -248,7 +248,9 @@ the exit and still be active; it is not a way to exit an unrelated caller.
 
 - `case` matches a key against literal clause keys using `eql`:
   `(case 2 (1 "one") (2 "two") (otherwise "other"))` returns `"two"`.
-  `ecase` signals an error when no key matches.
+  `ecase` signals an error when no key matches. The related `typecase` and
+  `etypecase` choose a clause by the value's type instead; see the
+  [Lesson 11 follow-up](11-conditions.md#follow-up-reference-choosing-a-branch-by-type).
 - `do` specifies explicit loop initialization, stepping, and termination.
 - `(block name body...)` creates an explicit named region for `return-from`.
 - Mutually recursive `labels` helpers call each other. Each call must still

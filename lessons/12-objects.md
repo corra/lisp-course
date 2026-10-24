@@ -129,6 +129,36 @@ not required for this lab. Their ordering is specified in the HyperSpec's
 The examples here use only primary methods and `call-next-method`, so there is
 no hidden requirement to implement the other method combinations.
 
+## Follow-up: how objects print at the REPL
+
+**Optional; not needed for Lab 12.** A class instance normally prints with only
+its class name and an implementation-specific identity, such as
+`#<TASK {1200DADA13}>`, which says little in a backtrace or REPL result.
+`print-object` is a standard generic function that the printer calls for every
+object; add a method to it for your class rather than calling it yourself:
+
+```lisp
+(defmethod print-object ((object task) stream)
+  (print-unreadable-object (object stream :type t)
+    (format stream "~S" (task-title object))))
+
+(make-instance 'task :title "Study") ; displays #<TASK "Study">
+```
+
+The method receives the object and the stream to write to. The standard macro
+`print-unreadable-object` writes the surrounding `#<...>`, and `:type t` adds
+the class name; it shows the subclass name for subclasses too, so an
+`urgent-task` displays as `#<URGENT-TASK "Ship">` through this inherited method.
+`#<` tells readers that the text cannot be read back as Lisp data: with
+`*print-readably*` true (Lesson 15's persistence), printing such an object
+signals a `print-not-readable` error instead. Structures already print readably
+as `#S(READING :SENSOR "room" :VALUE 21)`, so they rarely need this.
+
+Keep the two jobs separate: `print-object` is the programmer-facing
+representation used by the REPL, the debugger, and `~S`/`~A`; application text,
+such as `display-label` above or Lab 12's `render`, belongs in your own generic
+functions. Redefining `print-object` does not change those functions' output.
+
 Use an alist/plist for tiny flexible data, a structure for straightforward
 records, and classes/generic functions when extensible behavior and relationships
 justify them. Plain functions and lists remain good tools.

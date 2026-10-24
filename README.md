@@ -120,7 +120,7 @@ commands assume this directory is the working directory.
 
 The full reference suite was checked on Linux with **SBCL 2.6.9**, with site and
 user initialization disabled. It covers language examples, exercise solutions,
-capstone behavior and malformed files, plus 19 CLI subprocess scenarios. CLI
+capstone behavior and malformed files, plus 22 CLI subprocess scenarios. CLI
 tests execute from a different working directory. You can select a different
 SBCL binary for subprocess tests using the `COURSE_SBCL` environment variable.
 

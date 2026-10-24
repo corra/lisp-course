@@ -144,7 +144,8 @@ procedure; automated expected-error tests wait until Lesson 10.
 ### Exercises
 
 1. Implement `frequencies` and test independently allocated equal strings.
-2. Write `lookup-or-error`: retrieve a key, returning stored `nil` normally but
+2. Write `(lookup-or-error key table)`: retrieve `key` from hash table `table`,
+   returning stored `nil` normally but
    signaling an error for absence.
 3. Create a growable vector of squares from 0 through 9.
 4. Compare an alist, hash table, and vector for a phonebook; state assumptions

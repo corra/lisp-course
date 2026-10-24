@@ -177,7 +177,8 @@ it is not a separate representation or a new kind of list.
 ### Exercises
 
 1. Draw the cells for `(cons 'a (list 'b 'c))` and `(cons 'a 'b)`.
-2. Write `count-occurrences` using `dolist` and an explicit `equal` comparison.
+2. Write `(count-occurrences item items)`, returning how many elements of
+   `items` are `equal` to `item`. Use `dolist` and an explicit `equal` comparison.
 3. Write `replace-first-copy`: given a nonempty list and a new value, return a
    list with a changed first element without modifying the input spine.
 4. Demonstrate that `copy-list` does not independently copy nested lists, using

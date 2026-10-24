@@ -33,6 +33,11 @@
                (format t "Added ~D: ~A~%" (course-tasks:task-id task)
                        (course-tasks:task-title task))))
             ((string= command "done")
+             ;; Stricter than PARSE-INTEGER, which accepts whitespace, a sign,
+             ;; and (on SBCL) non-ASCII decimal digits.
+             (unless (and (plusp (length argument))
+                          (every (lambda (c) (find c "0123456789")) argument))
+               (error "ID must be written with the digits 0-9: ~S" argument))
              (let ((id (parse-integer argument)))
                (course-tasks:complete-task store id)
                (course-tasks:save-store store file)

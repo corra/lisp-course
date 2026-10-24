@@ -118,3 +118,45 @@ Quicklisp-dependent tests, editor installations, and hosted CI are outside this
 validation. Passing the reference suite alone does not prove every prose claim
 or every learner implementation correct; the tracing and mutation checks are
 deliberately additional checks of the review findings.
+
+# Follow-up peer review — 2026-10-23
+
+Reviewed all lessons, supporting documents, optional numeric/dynamic-scope/
+library modules, and reference code at commit `b859256`. SBCL-specific claims
+(the Lesson 10 debugger transcript, recursive tracing, structure redefinition,
+base-string command-line arguments, special-binding behavior, and rounding
+tables) were checked against SBCL 2.6.9. The Lesson 09/10 ASDF test recipe was
+followed verbatim and correctly exits nonzero on a failed assertion.
+
+| # | Priority | Finding | Resolution |
+|---|---|---|---|
+| 1 | medium | Lesson 00's review question implied that `load` at the REPL displays a file's form values; it returns only `T` | Reworded the question and its answer; Lesson 00 §4 now states that `load` does not echo values |
+| 2 | low | Argument order unstated for `count-occurrences` and `lookup-or-error` | Signatures stated in Labs 05.2 and 07.2, matching the reference answers |
+| 3 | low | REFERENCE listed `mod`, `endp`, and `delete`, which no lesson teaches | Removed; `expt` now links to the numeric reference |
+| 4 | low | Milestone 2 needs character comparison that is never taught | Lab 08.3 hints that `find` with its default `eql` test suffices |
+| 5 | low | Capstone guide said all data-file symbols intern in the reader package | Clarified that package-qualified tokens intern in the named package |
+| 6 | low | `done` accepted whitespace, `+`, and (on SBCL) non-ASCII digits via `parse-integer` | CLI requires ASCII digits 0–9; three subprocess regression checks added |
+| 7 | nit | Lesson 15 link text `05–08` pointed only to Lesson 08 | Split into separate links |
+
+Two completeness gaps were also filled with optional follow-up sections, not
+new lab requirements:
+
+- **`typecase`/`etypecase`** ([Lesson 11](lessons/11-conditions.md#follow-up-reference-choosing-a-branch-by-type),
+  cross-referenced from Lesson 04's `case`): ordered type clauses, and why
+  `etypecase` is preferable when an unexpected type is a bug.
+- **`print-object`** ([Lesson 12](lessons/12-objects.md#follow-up-how-objects-print-at-the-repl)):
+  readable REPL/debugger display of class instances via
+  `print-unreadable-object`, kept separate from application rendering.
+
+Seven smoke checks cover their examples, including inheritance of the printed
+form by a subclass and the `print-not-readable` error under `*print-readably*`.
+
+Result after the fixes: **258 checks passed** — 144 language smoke checks,
+50 exercise checks, 42 capstone checks, and 22 CLI subprocess checks. The
+optional library suite (11 checks) also passed with Quicklisp installed. A
+fullwidth-digit ID (`"１"`) was confirmed rejected manually; it is not in the
+automated suite because subprocess argument encoding depends on the runner's
+locale. Local Markdown links/anchors and `git diff --check` passed.
+
+Editor integration guides, hosted CI on Ubuntu's packaged SBCL, and non-Arch
+distribution install commands were not exercised.

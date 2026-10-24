@@ -33,6 +33,12 @@
       :report "Use zero for this score."
       0)))
 
+(defun describe-score-input (value)
+  (etypecase value
+    ((integer 0 100) :valid-score)
+    (integer :out-of-range)
+    (string :needs-parsing)))
+
 (defstruct reading
   (sensor "unknown")
   (value 0))
@@ -52,6 +58,10 @@
 
 (defmethod display-label ((object urgent-task))
   (format nil "~A (due ~A)" (call-next-method) (task-deadline object)))
+
+(defmethod print-object ((object task) stream)
+  (print-unreadable-object (object stream :type t)
+    (format stream "~S" (task-title object))))
 
 (defmacro when-positive (expression &body body)
   `(when (plusp ,expression)
@@ -116,6 +126,12 @@
                                          (invoke-restart 'use-zero))))
                         (recoverable-score 150))))
   (funcall check (= 50 (recoverable-score 50)))
+  ;; Lesson 11 follow-up: ordered type clauses; no match is a TYPE-ERROR.
+  (funcall check (equal '(:valid-score :out-of-range :needs-parsing)
+                        (mapcar #'describe-score-input '(50 150 "85"))))
+  (funcall check (handler-case (progn (describe-score-input 8.5) nil)
+                   (type-error () t)))
+  (funcall check (null (typecase 8.5 (integer :integer) (string :string))))
   ;; Lesson 12: structures and generic functions.
   (funcall check (= 22 (let ((r (make-reading :sensor "room" :value 21)))
                          (incf (reading-value r))
@@ -124,6 +140,20 @@
                           (display-label (make-instance 'urgent-task
                                                         :title "Study"
                                                         :deadline "Friday"))))
+  ;; Lesson 12 follow-up: PRINT-OBJECT is inherited and is not readable output.
+  (funcall check (string= "#<TASK \"Study\">"
+                          (format nil "~S" (make-instance 'task :title "Study"))))
+  (funcall check (string= "#<URGENT-TASK \"Ship\">"
+                          (format nil "~S" (make-instance 'urgent-task
+                                                          :title "Ship"
+                                                          :deadline "Friday"))))
+  (funcall check (handler-case
+                     (let ((*print-readably* t))
+                       (format nil "~S" (make-instance 'task :title "Study"))
+                       nil)
+                   (print-not-readable () t)))
+  (funcall check (string= "#S(READING :SENSOR \"room\" :VALUE 21)"
+                          (format nil "~S" (make-reading :sensor "room" :value 21))))
   ;; Lesson 13: expansions, repeated evaluation, intentional binding.
   (funcall check (equal '((when (plusp (+ 1 2)) (format t "yes~%")) t)
                         (multiple-value-list

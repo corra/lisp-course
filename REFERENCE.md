@@ -46,7 +46,9 @@ that every incidental name is a separate language feature.
 | `defpackage`/`in-package`, `#:` and colon syntax, `*package*`, `find-package`, `require`, ASDF components/dependencies | [09 — systems](lessons/09-systems.md) |
 | `assert`, expected-error test preview, `abs`, inspection/tracing, `declaim`/`optimize` | [10 — testing](lessons/10-testing.md) |
 | `define-condition`, `error`/`warn`/`signal`, handlers, restarts, `declare (ignore ...)`, cleanup | [11 — conditions](lessons/11-conditions.md) |
+| `typecase`/`etypecase` (optional follow-up) | [11 — choosing a branch by type](lessons/11-conditions.md#follow-up-reference-choosing-a-branch-by-type) |
 | `defstruct`, generated names, `defclass`, `make-instance`, `defgeneric`/`defmethod`, slots, `call-next-method` | [12 — objects](lessons/12-objects.md) |
+| `print-object`, `print-unreadable-object` (optional follow-up) | [12 — how objects print](lessons/12-objects.md#follow-up-how-objects-print-at-the-repl) |
 | `defmacro`, `&body`, backquote/comma/comma-at, `macroexpand-1`, fresh names, phase rules (`eval-when`) | [13 — macros](lessons/13-macros.md) |
 | `time`, type declarations, `simple-array`, `the`, `loop across`/`into`/`of-type`/`finally`, saved images | [14 — performance](lessons/14-performance.md) |
 | Application-defined names, constructor options, validation helpers, reader/printer settings, ASDF test options, UIOP and SBCL CLI helpers | [15 — reference source guide](lessons/15-capstone.md#reading-the-reference-source) |
@@ -117,9 +119,9 @@ Use `funcall` for a function held in a variable; `apply` spreads its final list.
 
 | Need | Useful operations / cautions |
 |---|---|
-| Exact arithmetic | `+ - * / expt mod`; integer division can return a ratio |
+| Exact arithmetic | `+ - * /`, plus `expt` ([numeric reference](optional/NUMBERS.md)); `/` on integers can return a ratio |
 | Quotient/remainder | `floor` down, `ceiling` up, `truncate` toward zero, `round` nearest/ties-to-even; each returns integer quotient and remainder ([worked examples](lessons/02-values.md#integer-quotients-rounding-and-remainders)) |
-| Lists | `cons list first rest car cdr null endp` |
+| Lists | `cons list first rest car cdr null` |
 | List stacks | `push pop`, both update a place |
 | Copy | `copy-list` spine, `copy-tree` cons tree, `copy-seq` sequence |
 | Transform/filter | `mapcar map remove-if remove-if-not` |
@@ -179,7 +181,7 @@ Restart numbers vary. In production/batch code, do not require human recovery.
 2. Writing `(f x)` when `f` is a variable holding a function: use `funcall`.
 3. Using `eq` for numbers or string contents.
 4. Mutating quoted lists or literal strings.
-5. Ignoring the return value of `sort`, `delete`, or `nreverse`.
+5. Ignoring the return value of `sort` or `nreverse`.
 6. Assuming copies recursively duplicate all referenced objects.
 7. Treating `nil` as always meaning absence when it can be stored data.
 8. Assuming `let` initializers see sibling new bindings.

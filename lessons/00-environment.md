@@ -192,8 +192,11 @@ sbcl --noinform --no-sysinit --no-userinit --script work/hello.lisp
 ```
 
 Unlike the REPL, a script does not automatically print each form's return values.
-Only explicit output is displayed. A file of function definitions can load
-successfully without printing anything.
+Only explicit output is displayed. The same is true of `load` at the REPL: it
+evaluates each form in the file but displays only its own result, normally `T`,
+not the values of the forms it loaded. Only forms you type at the prompt have
+their values displayed. A file of function definitions can load successfully
+without printing anything.
 
 **Follow-up, not required on the first session:** compile and load a file:
 
@@ -270,5 +273,5 @@ explains conditions and restarts. You only need the recovery procedure here.
 
 ### Review questions
 
-1. Why does a source file containing only `(+ 1 2)` print a result in the REPL
-   but not necessarily when executed as a script?
+1. Typing `(+ 1 2)` at the REPL displays `3`. Why does neither `load` nor
+   `--script` of a file containing only that form display anything?

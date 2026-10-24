@@ -164,7 +164,7 @@ unfamiliar names. Names defined by the application are not new language features
 | `terpri` | Write a newline to an optional stream |
 | `*read-eval*`, `gensym`, `read` EOF arguments | Reader-safety setting, fresh sentinel, and EOF protocol taught in Lesson 08; explicitly rebound inside `with-standard-io-syntax` |
 | `*package*`, `find-package` | Current reader package and package lookup, taught in Lesson 09 |
-| `course-tasks.data`, `(:use)`, `:import-from` | An isolated reader package defined in `package.lisp`: `(:use)` inherits nothing, and `:import-from` shares only `NIL` and `T` with Common Lisp. Symbols in a data file are interned there instead of in the application package |
+| `course-tasks.data`, `(:use)`, `:import-from` | An isolated reader package defined in `package.lisp`: `(:use)` inherits nothing, and `:import-from` shares only `NIL` and `T` with Common Lisp. Unqualified symbols in a data file are interned there instead of in the application package; a package-qualified token such as `course-tasks::x` still interns into the package it names |
 | `reader-error`, `end-of-file` | Built-in condition types handled at the file boundary, not application-defined functions |
 
 ### Build and tests (`course-tasks.asd`, test scripts)
@@ -194,7 +194,11 @@ implementation's leading program argument in this script workflow.
 The driver's `main` and `usage` are application functions. Its `destructuring-bind`
 uses Lesson 06's `&optional` convention for the optional third argument. All
 parsing, collection access, conditions, and formatting otherwise reuse
-[Lessons 03](03-functions.md), [05–08](08-io.md), and [11](11-conditions.md).
+[Lessons 03](03-functions.md), [05](05-lists.md)–[08](08-io.md), and
+[11](11-conditions.md). The `done` command first checks with `every` and `find`
+(Lesson 06) that its ID uses only the ASCII digits 0–9: `parse-integer` alone
+would also accept surrounding whitespace, a `+` sign, and, on SBCL, non-ASCII
+decimal digits.
 
 ## Acceptance checklist
 

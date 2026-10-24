@@ -32,9 +32,10 @@ A sufficient file is:
 ```
 
 Load it and run it with `--script`. The compile/load recipe is a follow-up in
-Lesson 09, not required on your first session. A REPL
-explicitly prints returned values; a script evaluates forms but prints only
-explicit output. A function can both print something and return an unrelated
+Lesson 09, not required on your first session. The REPL displays the returned
+values of forms typed at its prompt. Loading a file, whether with `load` or
+`--script`, evaluates its forms but displays only explicit output; `load` itself
+returns `T`, which the REPL displays as the result of the `load` call. A function can both print something and return an unrelated
 value. `format` with destination `t` normally returns `nil`.
 
 ## 01 — Evaluation
